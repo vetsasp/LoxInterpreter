@@ -47,6 +47,10 @@ def main():
             tok.append("STAR * null")
         elif c == "!":
             tok.append("BANG ! null")
+        elif c == "<":
+            tok.append("LESS < null")
+        elif c == ">":
+            tok.append("GREATER > null")
         elif c == "=":
             if len(tok) > 0 and tok[-1] == "EQUAL = null":
                 tok.pop()
@@ -54,6 +58,12 @@ def main():
             elif len(tok) > 0 and tok[-1] == "BANG ! null":
                 tok.pop()
                 tok.append("BANG_EQUAL != null")
+            elif len(tok) > 0 and tok[-1] == "LESS < null":
+                tok.pop()
+                tok.append("LESS_EQUAL <= null")
+            elif len(tok) > 0 and tok[-1] == "GREATER > null":
+                tok.pop()
+                tok.append("GREATER_EQUAL >= null")
             else:
                 tok.append("EQUAL = null")
         else:
