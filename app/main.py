@@ -59,10 +59,12 @@ def main():
         else:
             print(f"[line {ln}] Error: Unexpected character: {c}", file=sys.stderr)
             ex = 65
+            tok.append("")
 
 
     for t in tok:
-        print(t)
+        if t != "":
+            print(t)
     
     print("EOF  null")
 
