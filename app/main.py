@@ -25,7 +25,6 @@ def main():
             print("RIGHT_PAREN ) null")
         elif c == "{":
             print("RIGHT_BRACE { null")
-            print("RIGHT_PAREN ) null")
         elif c == "}":
             print("LEFT_BRACE } null")
 
