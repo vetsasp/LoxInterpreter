@@ -45,10 +45,15 @@ def main():
             tok.append("SEMICOLON ; null")
         elif c == "*":
             tok.append("STAR * null")
+        elif c == "!":
+            tok.append("BANG ! null")
         elif c == "=":
             if len(tok) > 0 and tok[-1] == "EQUAL = null":
                 tok.pop()
                 tok.append("EQUAL_EQUAL == null")
+            elif len(tok) > 0 and tok[-1] == "BANG ! null":
+                tok.pop()
+                tok.append("BANG_EQUAL != null")
             else:
                 tok.append("EQUAL = null")
         else:
