@@ -17,34 +17,45 @@ def main():
 
     with open(filename) as file:
         file_contents = file.read()
+    
+    ex, ln = 0, 1
+
+    tok = []
 
     for c in file_contents:
-        if c == "(":
-            print("LEFT_PAREN ( null")
+        if c == "\n":
+            ln += 1
+        elif c == "(":
+            tok.append("LEFT_PAREN ( null")
         elif c == ")":
-            print("RIGHT_PAREN ) null")
+            tok.append("RIGHT_PAREN ) null")
         elif c == "{":
-            print("LEFT_BRACE { null")
+            tok.append("LEFT_BRACE { null")
         elif c == "}":
-            print("RIGHT_BRACE } null")
+            tok.append("RIGHT_BRACE } null")
         elif c == ",":
-            print("COMMA , null")
+            tok.append("COMMA , null")
         elif c == ".":
-            print("DOT . null")
+            tok.append("DOT . null")
         elif c == "-":
-            print("MINUS - null")
+            tok.append("MINUS - null")
         elif c == "+":
-            print("PLUS + null")
+            tok.append("PLUS + null")
         elif c == ";":
-            print("SEMICOLON ; null")
+            tok.append("SEMICOLON ; null")
         elif c == "*":
-            print("STAR * null")
+            tok.append("STAR * null")
         else:
-            print(f"ILLEGAL {c} null")
+            print(f"[line {ln}] Error: Unexpected character: {c}", file=sys.stderr)
+            ex = 65
 
+
+    for t in tok:
+        print(t)
     
-    print("EOF  null") # Placeholder, remove this line when implementing the scanner
+    print("EOF  null")
 
+    exit(ex)
 
 if __name__ == "__main__":
     main()
