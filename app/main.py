@@ -75,8 +75,8 @@ def main():
 
     while c := t.top():
         # print("Token: " + c) # debug
-        if c == "\n":
-            continue
+        if c == " " or c == "\t" or c == "\n":
+            pass
         elif c == "(":
             t.tok("LEFT_PAREN ( null")
         elif c == ")":
