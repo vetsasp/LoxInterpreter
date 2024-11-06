@@ -57,9 +57,11 @@ class Tokenizer:
             self._pos += 1
             if self._pos >= len(self._text):
                 return False
+            
+        literal = self._text[l+1:self._pos]
 
         lexeme = self._text[l:self._pos+1]
-        literal = lexeme[1:-1]
+        # literal = lexeme[1:-1]
 
         self.tok(f"STRING {lexeme} {literal}")
 
