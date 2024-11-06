@@ -7,6 +7,9 @@ class Tokenizer:
         self._pos = 0
         self._line = 1
         self._tokens = []
+
+    def __len__(self) -> int:
+        return len(self._text)
     
     def top(self) -> str:
         if self._pos >= len(self._text):
@@ -45,7 +48,22 @@ class Tokenizer:
 
     def isPrev(self, s: str) -> bool:
         return self._pos > 0 and self._tokens[-1] == s
+    
+    def parseString(self) -> bool:
+        l = self._pos
+        self._pos += 1
 
+        while self._text[self._pos] != "\"":
+            self._pos += 1
+            if self._pos >= len(self._text):
+                return False
+
+        lexeme = self._text[l:self._pos+1]
+        literal = lexeme[1:-1]
+
+        self.tok(f"STRING {lexeme} {literal}")
+
+        return True
 
 
 
@@ -125,6 +143,12 @@ def main():
                 t.inc_line()
             else:
                 t.tok("SLASH / null")
+        elif c == "\"":
+            # String
+            if not t.parseString():
+                print(f"[line {t.line()}] Error: Unterminated string.", file=sys.stderr)
+                ex = 65
+
         else:
             print(f"[line {t.line()}] Error: Unexpected character: {c}", file=sys.stderr)
             ex = 65
