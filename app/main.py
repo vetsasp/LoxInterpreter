@@ -71,6 +71,16 @@ class Tokenizer:
         else:
             print("can this even happen??")
             return False
+    
+    def parseIdent(self) -> bool:
+        match = re.match(r'[a-zA-Z_][a-zA-Z0-9_]+', self._text[self._pos:])
+        if match: 
+            ident = match.group()
+            self._pos += len(ident) - 1
+            self.tok(f"IDENTIFIER {ident} null")
+            return True
+        return False 
+
 
 
 
@@ -171,6 +181,9 @@ def main():
         elif c in {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}:
             # Number
             t.parseNum()
+        elif c.isalpha() or c == "_":
+            # Identifier
+            t.parseIdent()
         else:
             print(f"[line {t.line()}] Error: Unexpected character: {c}", file=sys.stderr)
             ex = 65
