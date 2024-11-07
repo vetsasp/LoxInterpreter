@@ -1,4 +1,5 @@
 import sys
+import re
 
 
 class Tokenizer:
@@ -16,18 +17,14 @@ class Tokenizer:
             return None
         else:
             return self._text[self._pos]
-            self._pos += 1
-            if c == "\n":
-                self._line += 1
-            return c
         
     def nxt(self) -> None:
         if self._pos >= len(self._text):
             return None
         else:
-            self._pos += 1
             if self.top() == "\n":
                 self._line += 1
+            self._pos += 1
     
     def tok(self, t: str) -> None:
         self._tokens.append(t)
@@ -47,25 +44,33 @@ class Tokenizer:
             self.nxt()
 
     def isPrev(self, s: str) -> bool:
-        return self._pos > 0 and self._tokens[-1] == s
+        return self._pos > 0 and self._tokens[-1].startswith(s)
     
     def parseString(self) -> bool:
-        l = self._pos
-        self._pos += 1
+        match = re.match(r'"[^"]*"', self._text[self._pos:], re.DOTALL)
+        if not match:
+            self._pos = len(self._text)
+            return False
+        s = match.group()
 
-        while self._text[self._pos] != "\"":
-            self._pos += 1
-            if self._pos >= len(self._text):
-                return False
-            
-        literal = self._text[l+1:self._pos]
+        self._pos += len(s) - 1
 
-        lexeme = self._text[l:self._pos+1]
-        # literal = lexeme[1:-1]
-
-        self.tok(f"STRING {lexeme} {literal}")
+        self.tok(f"STRING {s} {s[1:-1]}")
 
         return True
+
+    def parseNum(self) -> bool:
+        # match = re.match(r'\d+\.?\d*', self._text[self._pos:])
+        match = re.match(r'\d+', self._text[self._pos:])
+
+        if match:
+            n = match.group()
+            self._pos += len(n) - 1
+            self.tok(f"NUMBER {n} {float(n)}")
+            return True
+        else:
+            print("can this even happen??")
+            return False
 
 
 
@@ -108,7 +113,20 @@ def main():
         elif c == ",":
             t.tok("COMMA , null")
         elif c == ".":
-            t.tok("DOT . null")
+            # Check if Decimal
+            if t.isPrev("NUMBER"):
+                t.nxt()
+                if t.parseNum():
+                    decimal = t.pop().split()[1]
+                    whole = t.pop().split()[1]
+                    if float(decimal) == 0:
+                        t.tok(f"NUMBER {whole}.{decimal} {whole}.0")
+                    else:
+                        t.tok(f"NUMBER {whole}.{decimal} {whole}.{decimal}")
+                else:
+                    t.tok("DOT . null")
+            else:
+                t.tok("DOT . null")
         elif c == "-":
             t.tok("MINUS - null")
         elif c == "+":
@@ -124,22 +142,22 @@ def main():
         elif c == ">":
             t.tok("GREATER > null")
         elif c == "=":
-            if t.isPrev("EQUAL = null"):
+            if t.isPrev("EQUAL ="):
                 t.pop()
                 t.tok("EQUAL_EQUAL == null")
-            elif t.isPrev("BANG ! null"):
+            elif t.isPrev("BANG !"):
                 t.pop()
                 t.tok("BANG_EQUAL != null")
-            elif t.isPrev("LESS < null"):
+            elif t.isPrev("LESS <"):
                 t.pop()
                 t.tok("LESS_EQUAL <= null")
-            elif t.isPrev("GREATER > null"):
+            elif t.isPrev("GREATER >"):
                 t.pop()
                 t.tok("GREATER_EQUAL >= null")
             else:
                 t.tok("EQUAL = null")
         elif c == "/":
-            if t.isPrev("SLASH / null"):
+            if t.isPrev("SLASH /"):
                 # Comment 
                 t.pop()
                 t.inc_line()
@@ -150,7 +168,9 @@ def main():
             if not t.parseString():
                 print(f"[line {t.line()}] Error: Unterminated string.", file=sys.stderr)
                 ex = 65
-
+        elif c in {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}:
+            # Number
+            t.parseNum()
         else:
             print(f"[line {t.line()}] Error: Unexpected character: {c}", file=sys.stderr)
             ex = 65
