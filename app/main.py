@@ -73,15 +73,24 @@ class Tokenizer:
             return False
     
     def parseIdent(self) -> bool:
-        match = re.match(r'[a-zA-Z_][a-zA-Z0-9_]+', self._text[self._pos:])
+        match = re.match(r'[a-zA-Z_][a-zA-Z0-9_]*', self._text[self._pos:])
         if match: 
-            ident = match.group()
-            self._pos += len(ident) - 1
-            self.tok(f"IDENTIFIER {ident} null")
+            keyword = match.group()
+            self._pos += len(keyword) - 1
+            if not self.checkReserved(keyword):
+                self.tok(f"IDENTIFIER {keyword} null")
             return True
+        print("Parse Identifier Failed", file=sys.stderr)
         return False 
 
-
+    def checkReserved(self, kw: str) -> bool: 
+        keywords = {
+            "and", "class", "else", "false", "for", "fun", "if", "nil", "or", "print", "return", "super", "this", "true", "var", "while"
+        }
+        if kw in keywords:
+            self.tok(f"{kw.upper()} {kw} null")
+            return True
+        return False
 
 
 
