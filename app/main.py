@@ -27,8 +27,8 @@ class Tokenizer:
                 self._line += 1
             self._pos += 1
     
-    def tok(self, t: str) -> None:
-        self._tokens.append(t)
+    def tok(self, t: str, lex, lit = "null") -> None:
+        self._tokens.append((t, lex, lit))
 
     def pop(self) -> str:
         return self._tokens.pop()
@@ -39,13 +39,19 @@ class Tokenizer:
     def line(self) -> int:
         return self._line
     
+    def printTokens(self):
+        for token in self._tokens:
+            if token[0] != "" and token[0] != "EOF":
+                print(token[0], token[1], token[2])
+        print("EOF  null")
+
     def inc_line(self) -> None:
         while (c := self.top()) != "\n" and c != None:
             # print("skipping", c)
             self.nxt()
 
     def isPrev(self, s: str) -> bool:
-        return self._pos > 0 and self._tokens[-1].startswith(s)
+        return self._pos > 0 and self._tokens[-1][0] == s
     
     def parseString(self) -> bool:
         match = re.match(r'"[^"]*"', self._text[self._pos:], re.DOTALL)
@@ -56,7 +62,7 @@ class Tokenizer:
 
         self._pos += len(s) - 1
 
-        self.tok(f"STRING {s} {s[1:-1]}")
+        self.tok("STRING", s, s[1:-1])
 
         return True
 
@@ -66,7 +72,7 @@ class Tokenizer:
         if match:
             n = match.group()
             self._pos += len(n) - 1
-            self.tok(f"NUMBER {n} {float(n)}")
+            self.tok("NUMBER", n, float(n))
             return True
         else:
             print("can this even happen??")
@@ -78,7 +84,7 @@ class Tokenizer:
             keyword = match.group()
             self._pos += len(keyword) - 1
             if not self.checkReserved(keyword):
-                self.tok(f"IDENTIFIER {keyword} null")
+                self.tok(f"IDENTIFIER", keyword)
             return True
         print("Parse Identifier Failed", file=sys.stderr)
         return False 
@@ -88,7 +94,7 @@ class Tokenizer:
             "and", "class", "else", "false", "for", "fun", "if", "nil", "or", "print", "return", "super", "this", "true", "var", "while"
         }
         if kw in keywords:
-            self.tok(f"{kw.upper()} {kw} null")
+            self.tok(kw.upper(), kw)
             return True
         return False
 
@@ -99,63 +105,64 @@ class Tokenizer:
             if c == " " or c == "\t" or c == "\n":
                 pass
             elif c == "(":
-                self.tok("LEFT_PAREN ( null")
+                self.tok("LEFT_PAREN", "(")
             elif c == ")":
-                self.tok("RIGHT_PAREN ) null")
+                self.tok("RIGHT_PAREN", ")")
             elif c == "{":
-                self.tok("LEFT_BRACE { null")
+                self.tok("LEFT_BRACE", "{")
             elif c == "}":
-                self.tok("RIGHT_BRACE } null")
+                self.tok("RIGHT_BRACE", "}")
             elif c == ",":
-                self.tok("COMMA , null")
+                self.tok("COMMA", ",")
             elif c == ".":
                 # Check if Decimal
                 if self.isPrev("NUMBER"):
                     self.nxt()
                     if self.parseNum():
-                        decimal = self.pop().split()[1]
-                        whole = self.pop().split()[1]
-                        self.tok(f"NUMBER {whole}.{decimal} {float(f"{whole}.{decimal}")}")
+                        decimal = self.pop()[1]
+                        whole = self.pop()[1]
+                        n = f"{whole}.{decimal}"
+                        self.tok(f"NUMBER", n, float(n))
                     else:
-                        self.tok("DOT . null")
+                        self.tok("DOT", ".")
                 else:
-                    self.tok("DOT . null")
+                    self.tok("DOT", ".")
             elif c == "-":
-                self.tok("MINUS - null")
+                self.tok("MINUS", "-")
             elif c == "+":
-                self.tok("PLUS + null")
+                self.tok("PLUS", "+")
             elif c == ";":
-                self.tok("SEMICOLON ; null")
+                self.tok("SEMICOLON", ";")
             elif c == "*":
-                self.tok("STAR * null")
+                self.tok("STAR", "*")
             elif c == "!":
-                self.tok("BANG ! null")
+                self.tok("BANG", "!")
             elif c == "<":
-                self.tok("LESS < null")
+                self.tok("LESS", "<")
             elif c == ">":
-                self.tok("GREATER > null")
+                self.tok("GREATER", ">")
             elif c == "=":
-                if self.isPrev("EQUAL ="):
+                if self.isPrev("EQUAL"):
                     self.pop()
-                    self.tok("EQUAL_EQUAL == null")
-                elif self.isPrev("BANG !"):
+                    self.tok("EQUAL_EQUAL", "==")
+                elif self.isPrev("BANG"):
                     self.pop()
-                    self.tok("BANG_EQUAL != null")
-                elif self.isPrev("LESS <"):
+                    self.tok("BANG_EQUAL", "!=")
+                elif self.isPrev("LESS"):
                     self.pop()
-                    self.tok("LESS_EQUAL <= null")
-                elif self.isPrev("GREATER >"):
+                    self.tok("LESS_EQUAL", "<=")
+                elif self.isPrev("GREATER"):
                     self.pop()
-                    self.tok("GREATER_EQUAL >= null")
+                    self.tok("GREATER_EQUAL", ">=")
                 else:
-                    self.tok("EQUAL = null")
+                    self.tok("EQUAL", "=")
             elif c == "/":
-                if self.isPrev("SLASH /"):
+                if self.isPrev("SLASH"):
                     # Comment 
                     self.pop()
                     self.inc_line()
                 else:
-                    self.tok("SLASH / null")
+                    self.tok("SLASH", "/")
             elif c == "\"":
                 # String
                 if not self.parseString():
@@ -170,11 +177,11 @@ class Tokenizer:
             else:
                 print(f"[line {self.line()}] Error: Unexpected character: {c}", file=sys.stderr)
                 ex = 65
-                self.tok("")
+                self.tok("", "")
             
             self.nxt()
         
-        self.tok("EOF  null")
+        self.tok("EOF", "null")
 
         return ex
 
@@ -210,13 +217,12 @@ class Parser:
     def parse(self) -> bool:
         for token in self._tokens:
             # print(token)
-            split = token.split()
-            expType = self.typeMap(split[0])
+            expType = self.typeMap(token[0])
 
             if expType == Parser.Expression.LITERAL:
-                v = split[1]
-                if split[0] == "NUMBER":
-                    v = float(v)
+                v = token[1]
+                if token[0] == "NUMBER" or token[0] == "STRING":
+                    v = token[2]
                 self.head = Parser.ST(expType, v)
     
     def printTree(self) -> None: 
@@ -250,19 +256,16 @@ def main():
 
     ex = tknzr.tokenize()
 
-    tokens = tknzr.tokens()
 
     if command == "tokenize":
-        for token in tokens:
-            if token != "":
-                print(token)
+        tknzr.printTokens()
         exit(ex)
-
+        
     if ex != 0:
         print("Tokenizing Failed. Cannot Parse. Exit Code", ex)
         exit(ex)
 
-    psr = Parser(tokens)
+    psr = Parser(tknzr.tokens())
 
     psr.parse()
 
