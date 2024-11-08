@@ -193,7 +193,7 @@ class Parser:
         GROUPING = 3
 
     class ST:
-        def __init__(self, t, val, left = None, right = None):
+        def __init__(self, t, val = None, left = None, right = None):
             self.type = t
             self.val = val
             self.left, self.right = left, right 
@@ -209,10 +209,11 @@ class Parser:
             "TRUE": Parser.Expression.LITERAL, 
             "FALSE": Parser.Expression.LITERAL, 
             "NIL": Parser.Expression.LITERAL,
-            "EOF": None
+            "EOF": None,
+            "RIGHT_PAREN": Parser.Expression.GROUPING
         }
 
-        return typeMap[token]
+        return typeMap[token] if token in typeMap else None
 
     def parse(self) -> bool:
         for token in self._tokens:
@@ -224,15 +225,23 @@ class Parser:
                 if token[0] == "NUMBER" or token[0] == "STRING":
                     v = token[2]
                 self.head = Parser.ST(expType, v)
+            elif expType == Parser.Expression.GROUPING:
+                node = Parser.ST(expType, left=self.head)
+                self.head = node 
     
     def printTree(self) -> None: 
         self._printTree(self.head)
 
     def _printTree(self, node: ST) -> None:
         if node:
-            print(node.val)
-            self._printTree(node.left)
-            self._printTree(node.right)
+            if node.type == Parser.Expression.GROUPING:
+                print("(group ", end="")
+                self._printTree(node.left)
+                print(")")
+            else: 
+                print(node.val, end="")
+                self._printTree(node.left)
+                self._printTree(node.right)
 
 
 def main():
