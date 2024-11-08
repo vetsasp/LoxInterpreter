@@ -115,10 +115,7 @@ class Tokenizer:
                     if self.parseNum():
                         decimal = self.pop().split()[1]
                         whole = self.pop().split()[1]
-                        if float(decimal) == 0:
-                            self.tok(f"NUMBER {whole}.{decimal} {whole}.0")
-                        else:
-                            self.tok(f"NUMBER {whole}.{decimal} {whole}.{decimal}")
+                        self.tok(f"NUMBER {whole}.{decimal} {float(f"{whole}.{decimal}")}")
                     else:
                         self.tok("DOT . null")
                 else:
