@@ -201,6 +201,12 @@ class Parser:
     def __init__(self, tokens):
         self._tokens = tokens
         self.head = None 
+        self._pos = 0
+
+    def nxt(self):
+        token = self._tokens[self._pos]
+        self._pos += 1
+        return token
 
     def typeMap(self, token: str) -> Expression:
         typeMap = {
@@ -210,38 +216,51 @@ class Parser:
             "FALSE": Parser.Expression.LITERAL, 
             "NIL": Parser.Expression.LITERAL,
             "EOF": None,
-            "RIGHT_PAREN": Parser.Expression.GROUPING
+            "LEFT_PAREN": Parser.Expression.GROUPING,
+            "BANG": Parser.Expression.UNARY,
+            "MINUS": Parser.Expression.UNARY,
         }
 
         return typeMap[token] if token in typeMap else None
 
-    def parse(self) -> bool:
-        for token in self._tokens:
-            # print(token)
-            expType = self.typeMap(token[0])
+    def parse(self) -> None:
+        self.head = self._parse(self.nxt())
 
-            if expType == Parser.Expression.LITERAL:
-                v = token[1]
-                if token[0] == "NUMBER" or token[0] == "STRING":
-                    v = token[2]
-                self.head = Parser.ST(expType, v)
-            elif expType == Parser.Expression.GROUPING:
-                node = Parser.ST(expType, left=self.head)
-                self.head = node 
+    def _parse(self, token) -> ST:
+        # print("parsing", token)
+        expType = self.typeMap(token[0])
+
+        if expType == Parser.Expression.LITERAL:
+            v = token[1]
+            if token[0] == "NUMBER" or token[0] == "STRING":
+                v = token[2]
+            return Parser.ST(expType, v)
+        elif expType == Parser.Expression.GROUPING:
+            left = self._parse(self.nxt())
+            node = Parser.ST(expType, "group", left=left)
+            return node 
+        elif expType == Parser.Expression.UNARY:
+            left = self._parse(self.nxt())
+            node = Parser.ST(expType, token[1], left=left)
+            return node 
     
     def printTree(self) -> None: 
         self._printTree(self.head)
 
     def _printTree(self, node: ST) -> None:
         if node:
-            if node.type == Parser.Expression.GROUPING:
-                print("(group ", end="")
+            if node.type == Parser.Expression.GROUPING or node.type == Parser.Expression.UNARY:
+                print("(", end="")
+                print(node.val, end=" ")
                 self._printTree(node.left)
                 print(")", end="")
             else: 
                 print(node.val, end="")
                 self._printTree(node.left)
                 self._printTree(node.right)
+
+
+
 
 
 def main():
@@ -279,6 +298,8 @@ def main():
     psr.parse()
 
     psr.printTree()
+
+    print()
 
 if __name__ == "__main__":
     main()
