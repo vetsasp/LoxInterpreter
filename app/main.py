@@ -217,7 +217,10 @@ class Parser:
             expType = self.typeMap(split[0])
 
             if expType == Parser.Expression.LITERAL:
-                self.head = Parser.ST(expType, split[1])
+                v = split[1]
+                if split[0] == "NUMBER":
+                    v = split[2]
+                self.head = Parser.ST(expType, v)
     
     def printTree(self) -> None: 
         self._printTree(self.head)
