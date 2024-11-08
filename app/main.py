@@ -1,5 +1,6 @@
 import sys
 import re
+from enum import Enum
 
 
 class Tokenizer:
@@ -60,7 +61,6 @@ class Tokenizer:
         return True
 
     def parseNum(self) -> bool:
-        # match = re.match(r'\d+\.?\d*', self._text[self._pos:])
         match = re.match(r'\d+', self._text[self._pos:])
 
         if match:
@@ -92,7 +92,141 @@ class Tokenizer:
             return True
         return False
 
+    def tokenize(self) -> int:
+        ex = 0
+        while c := self.top():
+            # print("Token: " + c) # debug
+            if c == " " or c == "\t" or c == "\n":
+                pass
+            elif c == "(":
+                self.tok("LEFT_PAREN ( null")
+            elif c == ")":
+                self.tok("RIGHT_PAREN ) null")
+            elif c == "{":
+                self.tok("LEFT_BRACE { null")
+            elif c == "}":
+                self.tok("RIGHT_BRACE } null")
+            elif c == ",":
+                self.tok("COMMA , null")
+            elif c == ".":
+                # Check if Decimal
+                if self.isPrev("NUMBER"):
+                    self.nxt()
+                    if self.parseNum():
+                        decimal = self.pop().split()[1]
+                        whole = self.pop().split()[1]
+                        if float(decimal) == 0:
+                            self.tok(f"NUMBER {whole}.{decimal} {whole}.0")
+                        else:
+                            self.tok(f"NUMBER {whole}.{decimal} {whole}.{decimal}")
+                    else:
+                        self.tok("DOT . null")
+                else:
+                    self.tok("DOT . null")
+            elif c == "-":
+                self.tok("MINUS - null")
+            elif c == "+":
+                self.tok("PLUS + null")
+            elif c == ";":
+                self.tok("SEMICOLON ; null")
+            elif c == "*":
+                self.tok("STAR * null")
+            elif c == "!":
+                self.tok("BANG ! null")
+            elif c == "<":
+                self.tok("LESS < null")
+            elif c == ">":
+                self.tok("GREATER > null")
+            elif c == "=":
+                if self.isPrev("EQUAL ="):
+                    self.pop()
+                    self.tok("EQUAL_EQUAL == null")
+                elif self.isPrev("BANG !"):
+                    self.pop()
+                    self.tok("BANG_EQUAL != null")
+                elif self.isPrev("LESS <"):
+                    self.pop()
+                    self.tok("LESS_EQUAL <= null")
+                elif self.isPrev("GREATER >"):
+                    self.pop()
+                    self.tok("GREATER_EQUAL >= null")
+                else:
+                    self.tok("EQUAL = null")
+            elif c == "/":
+                if self.isPrev("SLASH /"):
+                    # Comment 
+                    self.pop()
+                    self.inc_line()
+                else:
+                    self.tok("SLASH / null")
+            elif c == "\"":
+                # String
+                if not self.parseString():
+                    print(f"[line {self.line()}] Error: Unterminated string.", file=sys.stderr)
+                    ex = 65
+            elif c in {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}:
+                # Number
+                self.parseNum()
+            elif c.isalpha() or c == "_":
+                # Identifier
+                self.parseIdent()
+            else:
+                print(f"[line {self.line()}] Error: Unexpected character: {c}", file=sys.stderr)
+                ex = 65
+                self.tok("")
+            
+            self.nxt()
+        
+        self.tok("EOF  null")
 
+        return ex
+
+class Parser:
+    class Expression(Enum):
+        LITERAL = 0
+        UNARY = 1
+        BINARY = 2
+        GROUPING = 3
+
+    class ST:
+        def __init__(self, t, val, left = None, right = None):
+            self.type = t
+            self.val = val
+            self.left, self.right = left, right 
+
+    def __init__(self, tokens):
+        self._tokens = tokens
+        self.head = None 
+
+    def typeMap(self, token: str) -> Expression:
+        typeMap = {
+            "NUMBER": Parser.Expression.LITERAL, 
+            "STRING": Parser.Expression.LITERAL, 
+            "TRUE": Parser.Expression.LITERAL, 
+            "FALSE": Parser.Expression.LITERAL, 
+            "NIL": Parser.Expression.LITERAL,
+            "EOF": None
+        }
+
+        return typeMap[token]
+
+    def parse(self) -> bool:
+        for token in self._tokens:
+            # print(token)
+            split = token.split()
+            expType = self.typeMap(split[0])
+
+            if expType == Parser.Expression.LITERAL:
+                self.head = Parser.ST(expType, split[1])
+    
+    def printTree(self) -> None: 
+        self._printTree(self.head)
+
+    def _printTree(self, node: ST) -> None:
+        if node:
+            print(node.val)
+            self._printTree(node.left)
+            self._printTree(node.right)
 
 
 def main():
@@ -105,111 +239,34 @@ def main():
     command = sys.argv[1]
     filename = sys.argv[2]
 
-    if command != "tokenize":
+    if command != "tokenize" and command != "parse":
         print(f"Unknown command: {command}", file=sys.stderr)
         exit(1)
 
     with open(filename) as file:
         file_contents = file.read()
     
-    t = Tokenizer(file_contents)
+    tknzr = Tokenizer(file_contents)
 
-    ex = 0
+    ex = tknzr.tokenize()
 
+    tokens = tknzr.tokens()
 
-    while c := t.top():
-        # print("Token: " + c) # debug
-        if c == " " or c == "\t" or c == "\n":
-            pass
-        elif c == "(":
-            t.tok("LEFT_PAREN ( null")
-        elif c == ")":
-            t.tok("RIGHT_PAREN ) null")
-        elif c == "{":
-            t.tok("LEFT_BRACE { null")
-        elif c == "}":
-            t.tok("RIGHT_BRACE } null")
-        elif c == ",":
-            t.tok("COMMA , null")
-        elif c == ".":
-            # Check if Decimal
-            if t.isPrev("NUMBER"):
-                t.nxt()
-                if t.parseNum():
-                    decimal = t.pop().split()[1]
-                    whole = t.pop().split()[1]
-                    if float(decimal) == 0:
-                        t.tok(f"NUMBER {whole}.{decimal} {whole}.0")
-                    else:
-                        t.tok(f"NUMBER {whole}.{decimal} {whole}.{decimal}")
-                else:
-                    t.tok("DOT . null")
-            else:
-                t.tok("DOT . null")
-        elif c == "-":
-            t.tok("MINUS - null")
-        elif c == "+":
-            t.tok("PLUS + null")
-        elif c == ";":
-            t.tok("SEMICOLON ; null")
-        elif c == "*":
-            t.tok("STAR * null")
-        elif c == "!":
-            t.tok("BANG ! null")
-        elif c == "<":
-            t.tok("LESS < null")
-        elif c == ">":
-            t.tok("GREATER > null")
-        elif c == "=":
-            if t.isPrev("EQUAL ="):
-                t.pop()
-                t.tok("EQUAL_EQUAL == null")
-            elif t.isPrev("BANG !"):
-                t.pop()
-                t.tok("BANG_EQUAL != null")
-            elif t.isPrev("LESS <"):
-                t.pop()
-                t.tok("LESS_EQUAL <= null")
-            elif t.isPrev("GREATER >"):
-                t.pop()
-                t.tok("GREATER_EQUAL >= null")
-            else:
-                t.tok("EQUAL = null")
-        elif c == "/":
-            if t.isPrev("SLASH /"):
-                # Comment 
-                t.pop()
-                t.inc_line()
-            else:
-                t.tok("SLASH / null")
-        elif c == "\"":
-            # String
-            if not t.parseString():
-                print(f"[line {t.line()}] Error: Unterminated string.", file=sys.stderr)
-                ex = 65
-        elif c in {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}:
-            # Number
-            t.parseNum()
-        elif c.isalpha() or c == "_":
-            # Identifier
-            t.parseIdent()
-        else:
-            print(f"[line {t.line()}] Error: Unexpected character: {c}", file=sys.stderr)
-            ex = 65
-            t.tok("")
-        
-        t.nxt()
+    if command == "tokenize":
+        for token in tokens:
+            if token != "":
+                print(token)
+        exit(ex)
 
-        # print(t.tokens()) # debug
+    if ex != 0:
+        print("Tokenizing Failed. Cannot Parse. Exit Code", ex)
+        exit(ex)
 
+    psr = Parser(tokens)
 
-    for t in t.tokens():
-        if t != "":
-            print(t)
-    
-    print("EOF  null")
+    psr.parse()
 
-    exit(ex)
+    psr.printTree()
 
 if __name__ == "__main__":
     main()

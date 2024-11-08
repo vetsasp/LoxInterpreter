@@ -1,1 +1,1 @@
-var result = (a + b) > 7 or "Success" != "Failure" or x >= 5
+true
