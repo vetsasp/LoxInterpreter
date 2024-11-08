@@ -237,7 +237,7 @@ class Parser:
             if node.type == Parser.Expression.GROUPING:
                 print("(group ", end="")
                 self._printTree(node.left)
-                print(")")
+                print(")", end="")
             else: 
                 print(node.val, end="")
                 self._printTree(node.left)
