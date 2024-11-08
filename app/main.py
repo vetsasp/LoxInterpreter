@@ -219,7 +219,7 @@ class Parser:
             if expType == Parser.Expression.LITERAL:
                 v = split[1]
                 if split[0] == "NUMBER":
-                    v = split[2]
+                    v = float(v)
                 self.head = Parser.ST(expType, v)
     
     def printTree(self) -> None: 
