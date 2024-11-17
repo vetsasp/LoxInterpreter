@@ -70,3 +70,9 @@ class Binary(Expr):
     
     def accept(self, visitor):
         return visitor.visit_binary_expr(self)
+    
+
+
+if __name__ == "__main__":
+    print(68 / 5)
+    print(68 // 5)

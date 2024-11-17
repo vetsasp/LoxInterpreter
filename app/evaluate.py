@@ -58,7 +58,7 @@ class Evaluator(Visitor):
             return left + right 
         elif t == TokenType.SLASH:
             checkNumberOperands(expr.op, left, right)
-            return left // right 
+            return left / right 
         elif t == TokenType.STAR:
             checkNumberOperands(expr.op, left, right)
             return left * right 
@@ -72,6 +72,7 @@ def evaluate(expr: Expr):
     res = _evaluate(expr)
 
     # aesthetic changes 
+    print(res) # debug 
     if isinstance(res, float) and res.is_integer():
         return int(res)
     if isinstance(res, bool):
