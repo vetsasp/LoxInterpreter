@@ -40,7 +40,7 @@ class Interpreter:
         if cmd == "parse":
             print(expression)
 
-        # print(expression) # debug
+        # print(expression) # debug: print parse tree
         
         if self.hadError:
             exit(65)
@@ -68,7 +68,4 @@ class Interpreter:
         self.hadError = True
 
 
-if __name__ == "__main__":
-    pass
-    # print("scan: ", keyword.iskeyword("scan"))
-    # print("run: ", keyword.iskeyword("run"))
+# if __name__ == "__main__":

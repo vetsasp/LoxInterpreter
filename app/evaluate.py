@@ -70,7 +70,9 @@ class Evaluator(Visitor):
         
         print("binary evaluate failed")
 
-# evaluation helpers
+
+
+
 def evaluate(expr: Expr):
     # This evaluation is functionally correct
     # however, aesthetic differences from the book must be addressed
@@ -87,14 +89,10 @@ def _evaluate(expr: Expr):
     return expr.accept(Evaluator())
 
 def isTruthful(obj) -> bool:
-    if obj == "nil":
+    if obj == None:
         return False
     if isinstance(obj, bool):
         return obj
-    if obj == "true":
-        return True
-    if obj == "false":
-        return False
     return True
 
 def checkNumberOperand(operator: Token, operand):

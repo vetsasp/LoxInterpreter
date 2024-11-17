@@ -33,6 +33,10 @@ class Literal(Expr):
         self.val = val
     
     def __str__(self): 
+        if isinstance(self.val, bool):
+            return str(self.val).lower()
+        if not self.val:
+            return "nil"        
         return str(self.val)
     
     def accept(self, visitor):
