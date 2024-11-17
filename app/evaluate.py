@@ -18,8 +18,6 @@ class Evaluator(Visitor):
     def visit_unary_expr(self, expr): 
         child = _evaluate(expr.expr)
 
-        print("child: ", child)
-
         if expr.op.type == TokenType.BANG:
             return not isTruthful(child)
         elif expr.op.type == TokenType.MINUS:
@@ -91,7 +89,6 @@ def isTruthful(obj) -> bool:
     if obj == "true":
         return True
     if obj == "false":
-        print("truthful: false")
         return False
     return True
 
