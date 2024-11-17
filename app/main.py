@@ -13,7 +13,9 @@ def main():
     command = sys.argv[1]
     filename = sys.argv[2]
 
-    if command != "tokenize" and command != "parse":
+    validCommands = ["tokenize", "parse", "evaluate"]
+
+    if command not in validCommands:
         print(f"Unknown command: {command}", file=sys.stderr)
         exit(1)
 
@@ -22,9 +24,7 @@ def main():
     
     lox = Interpreter(file_contents)
 
-    exitCode = lox.run(command)
-
-    exit(exitCode)
+    lox.run(command)
 
 
 if __name__ == "__main__":

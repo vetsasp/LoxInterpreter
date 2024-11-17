@@ -1,46 +1,6 @@
 from app.tokens import TokenType
 from app.tokens import Token
-
-from abc import ABC, abstractmethod
-
-class Expr(ABC):
-    @abstractmethod
-    def __str__(self): 
-        pass 
-
-class Literal(Expr):
-    def __init__(self, val):
-        self.val = val
-    
-    def __str__(self): 
-        return str(self.val)
-    
-class Unary(Expr): 
-    def __init__(self, op, expr: Expr):
-        self.op = op
-        self.expr = expr
-    
-    def __str__(self):
-        return f"({self.op.lex} {self.expr})"
-
-class Grouping(Expr): 
-    def __init__(self, expr: Expr):
-        self.expr = expr
-    
-    def __str__(self):
-        return f"(group {self.expr})"
-
-class Binary(Expr): 
-    def __init__(self, op, left = None, right = None):
-        self.op = op
-        self.left = left
-        self.right = right
-
-    def __str__(self):
-        return f"({self.op.lex} {self.left} {self.right})"
-
-
-
+from app.expressions import *
 
 
 class Parser:
@@ -55,9 +15,6 @@ class Parser:
         self.head = None 
         self._pos = 0
         self._interpreter = interpreter
-
-    def printTree(self) -> None: 
-        print(self.head)
 
     # functions from the book 
     def atEnd(self) -> bool:
@@ -79,7 +36,7 @@ class Parser:
     def check(self, t: TokenType) -> bool:
         if self.atEnd():
             return False
-        return self.peek().token_type == t
+        return self.peek().type == t
 
     def match(self, *types) -> bool:
         for t in types:
@@ -92,25 +49,27 @@ class Parser:
         if self.check(t):
             return self.advance()
         
-        # raise ValueError(f"Error: {msg} at {self.peek()}")
-
         raise self.error(self.peek(), msg)
     
     def error(self, token: Token, msg: str) -> ParseError:
         self._interpreter.error(token, msg)
         return self.ParseError(token, msg)
     
-    def synchronize(self) -> None:
+    # for use with statements
+    def sync(self) -> None:
         self.advance()
 
         while not self.atEnd():
-            if self.prev().token_type == TokenType.SEMICOLON:
+            if self.prev().type == TokenType.SEMICOLON:
                 return
             
             # set of tokens that can start a statement
-            st = [TokenType.CLASS, TokenType.FUN, TokenType.VAR, TokenType.FOR, TokenType.IF, TokenType.WHILE, TokenType.PRINT, TokenType.RETURN]
+            st = [
+                TokenType.CLASS, TokenType.FUN, TokenType.VAR, TokenType.FOR, \
+                TokenType.IF, TokenType.WHILE, TokenType.PRINT, TokenType.RETURN
+            ]
 
-            if self.peek().token_type in st:
+            if self.peek().type in st:
                 return
 
             self.advance()
@@ -124,6 +83,7 @@ class Parser:
     def equality(self) -> Expr:
         expr = self.comparison()
 
+        # match !=, ==
         while (self.match(TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL)):
             op: Token = self.prev()
             right: Expr = self.comparison()
@@ -134,7 +94,9 @@ class Parser:
     def comparison(self) -> Expr:
         expr: Expr = self.term() 
 
-        while (self.match(TokenType.GREATER, TokenType.GREATER_EQUAL, TokenType.LESS, TokenType.LESS_EQUAL)):
+        # match >, >=, <, <=
+        while (self.match(TokenType.GREATER, TokenType.GREATER_EQUAL, \
+                          TokenType.LESS, TokenType.LESS_EQUAL)):
             op: Token = self.prev()
             right: Expr = self.term()
             expr = Binary(op, expr, right)
@@ -144,6 +106,7 @@ class Parser:
     def term(self) -> Expr:
         expr: Expr = self.factor()
 
+        # match +, -
         while (self.match(TokenType.MINUS, TokenType.PLUS)):
             op: Token = self.prev()
             right: Expr = self.factor()
@@ -154,6 +117,7 @@ class Parser:
     def factor(self) -> Expr:
         expr: Expr = self.unary()
 
+        # match /, *
         while (self.match(TokenType.SLASH, TokenType.STAR)):
             op: Token = self.prev()
             right: Expr = self.unary()
@@ -162,6 +126,7 @@ class Parser:
         return expr 
 
     def unary(self) -> Expr:
+        # match !, -
         if self.match(TokenType.BANG, TokenType.MINUS):
             op: Token = self.prev()
             right: Expr = self.unary()
@@ -180,15 +145,16 @@ class Parser:
         if self.match(TokenType.NUMBER, TokenType.STRING):
             return Literal(self.prev().lit)
         
+        # match ( expr )
         if self.match(TokenType.LEFT_PAREN):
             expr: Expr = self.expression()
             self.consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.")
             return Grouping(expr)
         
+        # if expr falls thru, raise error
         raise self.error(self.peek(), "Expected expression.")
 
     def parse(self) -> Expr:
-        # self.head = self.expression()
         try:
             self.head = self.expression()
             return self.head

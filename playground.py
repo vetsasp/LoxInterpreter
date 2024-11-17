@@ -1,31 +1,18 @@
-def isPalindrome(s: str) -> bool:
-    l, r = 0, len(s) - 1
-    curr = lambda i: s[i].lower()
+class Parent1:
+    def method1(self):
+        print("Parent 1 method")
 
-    while l < r:
-        while not s[l].isalpha() and l < r:
-            l += 1
-        while not s[r].isalpha() and r > l:
-            r -= 1
-        if l >= r:
-            break
-        if curr(l) != curr(r):
-            return False
-        l += 1
-        r -= 1 
-    return True 
+class Parent2:
+    def method2(self):
+        print("Parent 2 method")
 
+class Child(Parent1, Parent2):
+    def method3(self):
+        print("Child method")
 
-
-def main():
-    isPali = lambda x: x == x[::-1]
-    
-    assert isPalindrome("racecar"), "1"
-    assert isPalindrome("Race car?"), "2"
-    assert isPalindrome("how about a sentence ecne tneSA TUO Ba././1348 woh"), "3"
-    assert not isPalindrome("FRANK"), "4"
-
-    return
 
 if __name__ == "__main__":
-    main()
+    child = Child()
+    child.method1()  # Output: Parent 1 method
+    child.method2()  # Output: Parent 2 method
+    child.method3()  # Output: Child method

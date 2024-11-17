@@ -2,37 +2,62 @@ from app.tokens import TokenType
 from app.tokens import Token
 from app.tokenizer import Tokenizer
 from app.parser import Parser
+from app.expressions import Expr
+from app.expressions import evaluate
+from app.expressions import MyRuntimeError
 
 import sys
 
 class Interpreter:
     def __init__(self, text: str = ""):
         self._text = text
-        self._tokenizer = Tokenizer(text)
         self.hadError = False
 
+    def errorCheck(self):
+        if self.hadError:
+            exit(65)
+
     def run(self, cmd: str):
-        tokens, ex = self._tokenizer.tokenize() 
+        tokenizer = Tokenizer(self._text)
+        tokens = tokenizer.tokenize() 
 
         if cmd == "tokenize":
-            self._tokenizer.printTokens()
-            return ex
+            tokenizer.printTokens()
+            if tokenizer.hadError():
+                exit(65)
+            return
 
-        if ex != 0:
-            # print("Tokenizing Failed. Cannot Parse. Exit Code", ex)
-            return ex
+        if tokenizer.hadError():
+            exit(65)
 
-        self._parser = Parser(self, tokens)
-        self._parser.parse()
+        # tokenizer.printTokens() # debug: print tokens 
 
-        if cmd == "parse" and not self.hadError:
-            self._parser.printTree()
+        parser = Parser(self, tokens)
+        expression = parser.parse()
+
+        self.errorCheck()
+
+        if cmd == "parse":
+            print(expression)
+
+        # print(expression) # debug
         
         if self.hadError:
             exit(65)
+
+        if cmd == "evaluate":
+            self.interpret(expression)
+
+    def interpret(self, expression: Expr): 
+        try: 
+            value = evaluate(expression)
+            print(value)
+        except MyRuntimeError as e:
+            print("huh, idk really")
+        
         
     def error(self, token: Token, msg: str):
-        if (token.token_type == TokenType.EOF):
+        if (token.type == TokenType.EOF):
             self.report(token.line, " at end", msg)
         else:
             self.report(token.line, f"at '{token.lex}'", msg)

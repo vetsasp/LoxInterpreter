@@ -11,6 +11,7 @@ class Tokenizer:
         self._pos = 0
         self._line = 1
         self._tokens = []
+        self._hadError = False
 
 
     def __len__(self) -> int:
@@ -44,7 +45,7 @@ class Tokenizer:
     
     def printTokens(self):
         for token in self._tokens:
-            if token.token_type != None:
+            if token.type != None:
                 print(token)
 
     def inc_line(self) -> None:
@@ -53,7 +54,7 @@ class Tokenizer:
             self.advance()
 
     def isPrev(self, s: TokenType) -> bool:
-        return self._pos > 0 and self._tokens[-1].token_type == s
+        return self._pos > 0 and self._tokens[-1].type == s
     
     def parseString(self) -> bool:
         match = re.match(r'"[^"]*"', self._text[self._pos:], re.DOTALL)
@@ -115,7 +116,7 @@ class Tokenizer:
             return True
         return False
 
-    def tokenize(self) -> tuple[list[Token], int]:
+    def tokenize(self) -> list[Token]:
         mapping = {
             "(": TokenType.LEFT_PAREN, 
             ")": TokenType.RIGHT_PAREN,
@@ -150,20 +151,6 @@ class Tokenizer:
                         self.tok(TokenType.DOT, ".")
                 else:
                     self.tok(TokenType.DOT, ".")
-            # elif c == "-":
-            #     self.tok(TokenType.MINUS, "-")
-            # elif c == "+":
-            #     self.tok(TokenType.PLUS, "+")
-            # elif c == ";":
-            #     self.tok(TokenType.SEMICOLON, ";")
-            # elif c == "*":
-            #     self.tok(TokenType.STAR, "*")
-            # elif c == "!":
-            #     self.tok(TokenType.BANG, "!")
-            # elif c == "<":
-            #     self.tok(TokenType.LESS, "<")
-            # elif c == ">":
-            #     self.tok(TokenType.GREATER, ">")
             elif c == "=":
                 if self.isPrev(TokenType.EQUAL):
                     self.pop()
@@ -190,7 +177,7 @@ class Tokenizer:
                 # String
                 if not self.parseString():
                     print(f"[line {self.line()}] Error: Unterminated string.", file=sys.stderr)
-                    ex = 65
+                    self._hadError = True
             elif c in {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}:
                 # Number
                 self.parseNum()
@@ -199,15 +186,18 @@ class Tokenizer:
                 self.parseIdent()
             else:
                 print(f"[line {self.line()}] Error: Unexpected character: {c}", file=sys.stderr)
-                ex = 65
+                self._hadError = True
                 self.tok(None, None)
             
             self.advance()
         
         self.tok(TokenType.EOF, "", "null")
 
-        return self._tokens, ex
+        return self._tokens
     
+    def hadError(self) -> bool:
+        return self._hadError
+
     def _reset(self, text: str) -> None:
         self._pos = 0
         self._line = 1

@@ -51,8 +51,8 @@ class TokenType(Enum):
 
 class Token:
     def __init__(self, tt: TokenType, lex: str, lit: str, line:int):
-        self.token_type, self.lex, self.lit, self.line = \
+        self.type, self.lex, self.lit, self.line = \
                     tt, lex, lit, line
 
     def __str__(self):
-        return f"{self.token_type} {self.lex} {self.lit}"
+        return f"{self.type} {self.lex} {self.lit}"
