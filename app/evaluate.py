@@ -67,9 +67,15 @@ class Evaluator(Visitor):
 
 # evaluation helpers
 def evaluate(expr: Expr):
+    # This evaluation is functionally correct
+    # however, aesthetic differences from the book must be addressed
     res = _evaluate(expr)
+
+    # aesthetic changes 
     if isinstance(res, float) and res.is_integer():
         return int(res)
+    if isinstance(res, bool):
+        return "true" if res else "false"
     return res
 
 def _evaluate(expr: Expr): 
