@@ -3,19 +3,19 @@ from abc import ABC, abstractmethod
 
 class Visitor(ABC):
     @abstractmethod
-    def visit_literal_expr(self, expr): 
+    def visitLiteralExpr(self, expr): 
         pass
 
     @abstractmethod
-    def visit_unary_expr(self, expr): 
+    def visitUnaryExpr(self, expr): 
         pass
 
     @abstractmethod
-    def visit_grouping_expr(self, expr): 
+    def visitGroupingExpr(self, expr): 
         pass
 
     @abstractmethod
-    def visit_binary_expr(self, expr): 
+    def visitBinaryExpr(self, expr): 
         pass
 
 
@@ -36,7 +36,7 @@ class Literal(Expr):
         return str(self.val)
     
     def accept(self, visitor):
-        return visitor.visit_literal_expr(self)
+        return visitor.visitLiteralExpr(self)
     
 class Unary(Expr): 
     def __init__(self, op, expr: Expr):
@@ -47,7 +47,7 @@ class Unary(Expr):
         return f"({self.op.lex} {self.expr})"
     
     def accept(self, visitor):
-        return visitor.visit_unary_expr(self)
+        return visitor.visitUnaryExpr(self)
 
 class Grouping(Expr): 
     def __init__(self, expr: Expr):
@@ -57,7 +57,7 @@ class Grouping(Expr):
         return f"(group {self.expr})"
     
     def accept(self, visitor):
-        return visitor.visit_grouping_expr(self)
+        return visitor.visitGroupingExpr(self)
 
 class Binary(Expr): 
     def __init__(self, op, left = None, right = None):
@@ -69,4 +69,4 @@ class Binary(Expr):
         return f"({self.op.lex} {self.left} {self.right})"
     
     def accept(self, visitor):
-        return visitor.visit_binary_expr(self)
+        return visitor.visitBinaryExpr(self)

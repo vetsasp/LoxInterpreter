@@ -7,29 +7,33 @@ from app.expressions import Expr
 
 class MyRuntimeError(Exception): 
     def __init__(self, token: Token, msg: str):
-        super(msg)
+        super().__init__(msg)
         self.token = token 
+        self.msg = msg
+    
+    def __str__(self):
+        return f"{self.msg}\n[line {self.token.line}]"
 
 
 class Evaluator(Visitor):
-    def visit_literal_expr(self, expr): 
+    def visitLiteralExpr(self, expr): 
         return expr.val 
 
-    def visit_unary_expr(self, expr): 
+    def visitUnaryExpr(self, expr): 
         child = _evaluate(expr.expr)
 
         if expr.op.type == TokenType.BANG:
             return not isTruthful(child)
         elif expr.op.type == TokenType.MINUS:
-            checkNumberOperands(expr.op, child)
+            checkNumberOperand(expr.op, child)
             return -child
         
         print("unary evaluate failed")
 
-    def visit_grouping_expr(self, expr): 
+    def visitGroupingExpr(self, expr): 
         return _evaluate(expr.expr)
 
-    def visit_binary_expr(self, expr): 
+    def visitBinaryExpr(self, expr): 
         left = _evaluate(expr.left)
         right = _evaluate(expr.right)
 
@@ -91,6 +95,11 @@ def isTruthful(obj) -> bool:
     if obj == "false":
         return False
     return True
+
+def checkNumberOperand(operator: Token, operand):
+    if isinstance(operand, float):
+        return
+    raise MyRuntimeError(operator, "Operand must be a number.")
 
 def checkNumberOperands(operator: Token, *operands):
     for operand in operands:

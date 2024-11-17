@@ -53,7 +53,8 @@ class Interpreter:
             value = evaluate(expression)
             print(value)
         except MyRuntimeError as e:
-            print("huh, idk really")
+            print(e, file=sys.stderr)
+            exit(70)
         
         
     def error(self, token: Token, msg: str):
