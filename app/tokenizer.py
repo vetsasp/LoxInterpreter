@@ -11,20 +11,7 @@ class Tokenizer:
         self._pos = 0
         self._line = 1
         self._tokens = []
-        self._d = {
-            "(": TokenType.LEFT_PAREN, 
-            ")": TokenType.RIGHT_PAREN,
-            "{": TokenType.LEFT_BRACE,
-            "}": TokenType.RIGHT_BRACE,
-            ",": TokenType.COMMA,
-            "-": TokenType.MINUS,
-            "+": TokenType.PLUS,
-            ";": TokenType.SEMICOLON,
-            "*": TokenType.STAR,
-            "!": TokenType.BANG,
-            ">": TokenType.GREATER,
-            "<": TokenType.LESS,
-        }
+
 
     def __len__(self) -> int:
         return len(self._text)
@@ -44,7 +31,7 @@ class Tokenizer:
             self._pos += 1
     
     def tok(self, t: TokenType, lex, lit = "null") -> None:
-        self._tokens.append(Token(t, lex, lit))
+        self._tokens.append(Token(t, lex, lit, self._line))
 
     def pop(self) -> Token:
         return self._tokens.pop()
@@ -129,13 +116,27 @@ class Tokenizer:
         return False
 
     def tokenize(self) -> tuple[list[Token], int]:
+        mapping = {
+            "(": TokenType.LEFT_PAREN, 
+            ")": TokenType.RIGHT_PAREN,
+            "{": TokenType.LEFT_BRACE,
+            "}": TokenType.RIGHT_BRACE,
+            ",": TokenType.COMMA,
+            "-": TokenType.MINUS,
+            "+": TokenType.PLUS,
+            ";": TokenType.SEMICOLON,
+            "*": TokenType.STAR,
+            "!": TokenType.BANG,
+            ">": TokenType.GREATER,
+            "<": TokenType.LESS,
+        }
         ex = 0
         while c := self.top():
             # print("Token: " + c) # debug
             if c == " " or c == "\t" or c == "\n":
                 pass
-            elif c in self._d:
-                self.tok(self._d[c], c)
+            elif c in mapping:
+                self.tok(mapping[c], c)
             elif c == ".":
                 # Check if Decimal
                 if self.isPrev(TokenType.NUMBER):
@@ -214,8 +215,9 @@ class Tokenizer:
         self._text = text
 
 
+
 if __name__ == "__main__":
-    # Full test suite
+    # testing
 
     text = "({*+;+-})"
     print(text)
@@ -235,3 +237,9 @@ if __name__ == "__main__":
     tokens, ex = t.tokenize()
     t.printTokens()
 
+    text = "(72 +)"
+    print(text)
+    t._reset(text)
+    tokens, ex = t.tokenize()
+    t.printTokens()
+    print("ex:", ex)

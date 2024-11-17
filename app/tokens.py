@@ -50,8 +50,9 @@ class TokenType(Enum):
         return super().__str__().split(".")[1]
 
 class Token:
-    def __init__(self, tt: TokenType, lex: str, lit: str):
-        self.token_type, self.lex, self.lit = tt, lex, lit
+    def __init__(self, tt: TokenType, lex: str, lit: str, line:int):
+        self.token_type, self.lex, self.lit, self.line = \
+                    tt, lex, lit, line
 
     def __str__(self):
         return f"{self.token_type} {self.lex} {self.lit}"

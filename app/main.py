@@ -1,7 +1,4 @@
-from app.tokens import TokenType
-from app.tokens import Token
-from app.tokenizer import Tokenizer
-from app.parser import Parser
+from app.interpreter import Interpreter
 
 import sys
 
@@ -23,23 +20,11 @@ def main():
     with open(filename) as file:
         file_contents = file.read()
     
-    tsr = Tokenizer(file_contents)
+    lox = Interpreter(file_contents)
 
-    tokens, ex = tsr.tokenize()
+    exitCode = lox.run(command)
 
-    if command == "tokenize":
-        tsr.printTokens()
-        exit(ex)
-    
-    if ex != 0:
-        print("Tokenizing Failed. Cannot Parse. Exit Code", ex)
-        exit(ex)
-
-    psr = Parser(tokens)
-
-    psr.parse()
-
-    psr.printTree()
+    exit(exitCode)
 
 
 if __name__ == "__main__":

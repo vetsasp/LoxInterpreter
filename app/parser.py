@@ -16,7 +16,7 @@ class Literal(Expr):
         return str(self.val)
     
 class Unary(Expr): 
-    def __init__(self, op, expr: super = None):
+    def __init__(self, op, expr: Expr):
         self.op = op
         self.expr = expr
     
@@ -24,7 +24,7 @@ class Unary(Expr):
         return f"({self.op.lex} {self.expr})"
 
 class Grouping(Expr): 
-    def __init__(self, expr: super = None):
+    def __init__(self, expr: Expr):
         self.expr = expr
     
     def __str__(self):
@@ -41,12 +41,20 @@ class Binary(Expr):
 
 
 
+
+
 class Parser:
+    class ParseError(Exception):
+        def __init__(self, token, msg):
+            self.token = token
+            self.msg = msg
+
     # Parser init 
-    def __init__(self, tokens: list[Token]):
+    def __init__(self, interpreter, tokens: list[Token]):
         self._tokens = tokens
         self.head = None 
         self._pos = 0
+        self._interpreter = interpreter
 
     def printTree(self) -> None: 
         print(self.head)
@@ -84,8 +92,30 @@ class Parser:
         if self.check(t):
             return self.advance()
         
-        raise ValueError(f"Error: {msg} at {self.peek()}")
+        # raise ValueError(f"Error: {msg} at {self.peek()}")
+
+        raise self.error(self.peek(), msg)
     
+    def error(self, token: Token, msg: str) -> ParseError:
+        self._interpreter.error(token, msg)
+        return self.ParseError(token, msg)
+    
+    def synchronize(self) -> None:
+        self.advance()
+
+        while not self.atEnd():
+            if self.prev().token_type == TokenType.SEMICOLON:
+                return
+            
+            # set of tokens that can start a statement
+            st = [TokenType.CLASS, TokenType.FUN, TokenType.VAR, TokenType.FOR, TokenType.IF, TokenType.WHILE, TokenType.PRINT, TokenType.RETURN]
+
+            if self.peek().token_type in st:
+                return
+
+            self.advance()
+
+
 
     # The Grammar 
     def expression(self) -> Expr:
@@ -154,6 +184,13 @@ class Parser:
             expr: Expr = self.expression()
             self.consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.")
             return Grouping(expr)
+        
+        raise self.error(self.peek(), "Expected expression.")
 
-    def parse(self) -> None:
-        self.head = self.expression()
+    def parse(self) -> Expr:
+        # self.head = self.expression()
+        try:
+            self.head = self.expression()
+            return self.head
+        except self.ParseError as e:
+            return None
