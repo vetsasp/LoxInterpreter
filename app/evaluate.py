@@ -49,7 +49,7 @@ class Evaluator(Visitor):
             return left <= right 
         elif t == TokenType.BANG_EQUAL:
             return not left == right 
-        elif t == TokenType.EQUAL:
+        elif t == TokenType.EQUAL_EQUAL:
             return left == right 
         elif t == TokenType.MINUS:
             checkNumberOperands(expr.op, left, right)

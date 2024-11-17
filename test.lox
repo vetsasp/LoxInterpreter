@@ -1,1 +1,1 @@
-!!false
+"foo" == "foo"
