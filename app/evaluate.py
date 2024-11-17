@@ -72,7 +72,6 @@ def evaluate(expr: Expr):
     res = _evaluate(expr)
 
     # aesthetic changes 
-    print(res) # debug 
     if isinstance(res, float) and res.is_integer():
         return int(res)
     if isinstance(res, bool):
