@@ -82,7 +82,7 @@ def _evaluate(expr: Expr):
     return expr.accept(Evaluator())
 
 def isTruthful(obj) -> bool:
-    if obj == None:
+    if obj == "nil":
         return False
     if isinstance(obj, bool):
         return obj
