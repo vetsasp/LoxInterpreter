@@ -59,6 +59,7 @@ class Evaluator(Visitor):
             checkNumberOperands(expr.op, left, right)
             return left - right
         elif t == TokenType.PLUS:
+            checkPlusOperands(expr.op, left, right)
             return left + right 
         elif t == TokenType.SLASH:
             checkNumberOperands(expr.op, left, right)
@@ -106,3 +107,10 @@ def checkNumberOperands(operator: Token, *operands):
         if not isinstance(operand, float):
             raise MyRuntimeError(operator, "Operands must be numbers.")
     return 
+
+def checkPlusOperands(operator: Token, left, right):
+    if isinstance(left, float) and isinstance(right, float):
+        return
+    if isinstance(left, str) and isinstance(right, str):
+        return
+    raise MyRuntimeError(operator, "Operands must be two numbers or two strings.")
