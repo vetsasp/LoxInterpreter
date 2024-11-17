@@ -3,8 +3,8 @@ from app.tokens import Token
 from app.tokenizer import Tokenizer
 from app.parser import Parser
 from app.expressions import Expr
-from app.expressions import evaluate
-from app.expressions import MyRuntimeError
+from app.evaluate import evaluate
+from app.evaluate import MyRuntimeError
 
 import sys
 
