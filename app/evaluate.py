@@ -83,7 +83,7 @@ def evaluate(expr: Expr):
         return int(res)
     if isinstance(res, bool):
         return "true" if res else "false"
-    if not res:
+    if res == None:
         return "nil"
     return res
 

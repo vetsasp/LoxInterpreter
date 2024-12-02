@@ -16,3 +16,11 @@ if __name__ == "__main__":
     child.method1()  # Output: Parent 1 method
     child.method2()  # Output: Parent 2 method
     child.method3()  # Output: Child method
+
+    
+    if not None:
+        print("not none")
+    if not 0:
+        print("not 0")
+    if not 0.0:
+        print("not 0.0")

@@ -68,4 +68,10 @@ class Interpreter:
         self.hadError = True
 
 
-# if __name__ == "__main__":
+if __name__ == "__main__":
+    if not None:
+        print("not none")
+    if not 0:
+        print("not 0")
+    if not 0.0:
+        print("not 0.0")
