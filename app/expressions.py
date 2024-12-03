@@ -35,8 +35,8 @@ class Literal(Expr):
     def __str__(self): 
         if isinstance(self.val, bool):
             return str(self.val).lower()
-        if not self.val:
-            return "nil"        
+        if self.val == None:
+            return "nil"
         return str(self.val)
     
     def accept(self, visitor):
