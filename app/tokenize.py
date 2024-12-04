@@ -1,16 +1,16 @@
-from app.tokens import TokenType
-from app.tokens import Token
+from app.tokens import Token, TokenType
 
 import re
 import sys
 
 
 class Tokenizer:
-    def __init__(self, text):
+    def __init__(self, lox, text):
+        self.lox = lox
         self._text = text
         self._pos = 0
         self._line = 1
-        self._tokens = []
+        self._tokens: list[Token] = []
         self._hadError = False
 
 
@@ -50,7 +50,6 @@ class Tokenizer:
 
     def inc_line(self) -> None:
         while (c := self.top()) != "\n" and c != None:
-            # print("skipping", c)
             self.advance()
 
     def isPrev(self, s: TokenType) -> bool:
@@ -133,7 +132,6 @@ class Tokenizer:
         }
         ex = 0
         while c := self.top():
-            # print("Token: " + c) # debug
             if c == " " or c == "\t" or c == "\n":
                 pass
             elif c in mapping:
@@ -176,8 +174,9 @@ class Tokenizer:
             elif c == "\"":
                 # String
                 if not self.parseString():
-                    print(f"[line {self.line()}] Error: Unterminated string.", file=sys.stderr)
-                    self._hadError = True
+                    # print(f"[line {self.line()}] Error: Unterminated string.", file=sys.stderr)
+                    # self._hadError = True
+                    self.lox.tokenError(self.line(), "Unterminated string.")
             elif c in {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}:
                 # Number
                 self.parseNum()
@@ -185,13 +184,14 @@ class Tokenizer:
                 # Identifier
                 self.parseIdent()
             else:
-                print(f"[line {self.line()}] Error: Unexpected character: {c}", file=sys.stderr)
-                self._hadError = True
+                # print(f"[line {self.line()}] Error: Unexpected character: {c}", file=sys.stderr)
+                # self._hadError = True
+                self.lox.tokenError(self.line(), f"Unexpected character: {c}")
                 self.tok(None, None)
             
             self.advance()
         
-        self.tok(TokenType.EOF, "", "null")
+        self.tok(TokenType.EOF, "")
 
         return self._tokens
     
@@ -207,29 +207,4 @@ class Tokenizer:
 
 
 if __name__ == "__main__":
-    # testing
-
-    text = "({*+;+-})"
-    print(text)
-    t = Tokenizer(text)
-    tokens, ex = t.tokenize()
-    t.printTokens()
-
-    text = "1 + 2.5"
-    print(text)
-    t._reset(text)
-    tokens, ex = t.tokenize()
-    t.printTokens()
-
-    text = "\"hello world\""
-    print(text)
-    t._reset(text)
-    tokens, ex = t.tokenize()
-    t.printTokens()
-
-    text = "(72 +)"
-    print(text)
-    t._reset(text)
-    tokens, ex = t.tokenize()
-    t.printTokens()
-    print("ex:", ex)
+    pass

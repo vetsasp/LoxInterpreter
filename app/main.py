@@ -1,4 +1,4 @@
-from app.interpreter import Interpreter
+from app.lox import Lox
 
 import sys
 
@@ -6,28 +6,28 @@ import sys
 def main():
     # print("Logs here", file=sys.stderr)
 
-    if len(sys.argv) < 3:
+    argc = len(sys.argv)
+
+    if argc < 3:
         print("Usage: ./your_program.sh tokenize <filename>", file=sys.stderr)
         exit(1)
 
-    command = sys.argv[1]
-    filename = sys.argv[2]
+    lox = Lox()
 
-    validCommands = ["tokenize", "parse", "evaluate"]
 
-    if command not in validCommands:
-        print(f"Unknown command: {command}", file=sys.stderr)
-        exit(1)
 
-    with open(filename) as file:
-        file_contents = file.read()
-    
-    lox = Interpreter(file_contents)
+    if argc == 1:
+        lox.runPrompt() 
+    else:
+        cmd = sys.argv[1]
+        validCommands = ["tokenize", "parse", "evaluate"]
 
-    lox.run(command)
+        if cmd not in validCommands:
+            print(f"Unknown command: {cmd}", file=sys.stderr)
+            exit(1)
+        lox.runFile(sys.argv[2], cmd)
+
 
 
 if __name__ == "__main__":
     main()
-
-

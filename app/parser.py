@@ -1,6 +1,7 @@
 from app.tokens import TokenType
 from app.tokens import Token
-from app.expressions import *
+from app.expression import *
+# from app.statement import Stmt 
 
 
 class Parser:
@@ -10,11 +11,11 @@ class Parser:
             self.msg = msg
 
     # Parser init 
-    def __init__(self, interpreter, tokens: list[Token]):
+    def __init__(self, lox, tokens: list[Token]):
+        self._lox = lox
         self._tokens = tokens
         self.head = None 
         self._pos = 0
-        self._interpreter = interpreter
 
     # functions from the book 
     def atEnd(self) -> bool:
@@ -52,7 +53,7 @@ class Parser:
         raise self.error(self.peek(), msg)
     
     def error(self, token: Token, msg: str) -> ParseError:
-        self._interpreter.error(token, msg)
+        self._lox.parseError(token, msg)
         return self.ParseError(token, msg)
     
     # for use with statements
@@ -73,6 +74,9 @@ class Parser:
                 return
 
             self.advance()
+
+
+
 
 
 
@@ -154,9 +158,40 @@ class Parser:
         # if expr falls thru, raise error
         raise self.error(self.peek(), "Expected expression.")
 
-    def parse(self) -> Expr:
+
+
+    # Legacy code
+    def parse(self):
         try:
-            self.head = self.expression()
-            return self.head
+            return self.expression()
         except self.ParseError as e:
             return None
+
+
+
+
+''' INTRODUCTION OF STATEMENTS
+    def statement(self) -> Stmt:
+        if self.match(TokenType.PRINT):
+            return self.printStatement()
+        return self.expressionStatement()
+
+    def printStatement(self) -> Stmt:
+        val = self.expression()
+        self.consume(TokenType.SEMICOLON, "Expect ';' after value.")
+        return Stmt.Print(val)
+
+    def expressionStatement(self) -> Stmt:
+        expr = self.expression()
+        self.consume(TokenType.SEMICOLON, "Expect ';' after expression.")
+        return Stmt.Expression(expr)
+
+    def parse(self): 
+        statements = []
+        while not self.atEnd():
+            statements.append(self.statement())
+        return statements
+    
+
+'''
+    #

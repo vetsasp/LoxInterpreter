@@ -1,25 +1,26 @@
 from abc import ABC, abstractmethod
+# from app.statement import Stmt
 
 
-class Visitor(ABC):
-    @abstractmethod
-    def visitLiteralExpr(self, expr): 
-        pass
 
-    @abstractmethod
-    def visitUnaryExpr(self, expr): 
-        pass
+class Expr(ABC): #Stmt, ABC):
+    class Visitor(ABC):
+        @abstractmethod
+        def visitLiteralExpr(self, expr): 
+            pass
 
-    @abstractmethod
-    def visitGroupingExpr(self, expr): 
-        pass
+        @abstractmethod
+        def visitUnaryExpr(self, expr): 
+            pass
 
-    @abstractmethod
-    def visitBinaryExpr(self, expr): 
-        pass
+        @abstractmethod
+        def visitGroupingExpr(self, expr): 
+            pass
 
+        @abstractmethod
+        def visitBinaryExpr(self, expr): 
+            pass
 
-class Expr(ABC):
     @abstractmethod
     def __str__(self): 
         pass 
