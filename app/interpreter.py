@@ -23,7 +23,7 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
     #         self._lox.runtimeError(e)
 
     def interpret(self, statements: list[Stmt]):
-        print("Interpreting:", statements[0].expression)
+        # print("Interpreting:", statements[0].expression)
         try:
             for stmt in statements:
                 self.execute(stmt)
