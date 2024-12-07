@@ -238,6 +238,9 @@ class Parser:
         return StmtVariable(name, init)
     
     def statement(self) -> Stmt:
+        if self.match(TokenType.FOR):
+            return self.forStatement()
+        
         if self.match(TokenType.IF):
             return self.ifStatement()
 
@@ -251,6 +254,18 @@ class Parser:
             return StmtBlock(self.block())
 
         return self.expressionStatement()
+    
+    def forStatement(self) -> Stmt:
+        self.consume(TokenType.LEFT_PAREN, "Expect '(' after 'for'.")
+
+        initializer = None
+
+        if self.match(TokenType.SEMICOLON):
+            initializer = None
+        elif self.match(TokenType.VAR):
+            initializer = self.varDeclaration()
+        else:
+            initializer = self.expressionStatement()
 
     def ifStatement(self) -> Stmt:
         self.consume(TokenType.LEFT_PAREN, "Expect '(' after 'if'.")
