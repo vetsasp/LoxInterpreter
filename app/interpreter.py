@@ -197,3 +197,6 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         # if OR and left was NOT truthful | AND and left was truthful
         # Only evaluate the right side IF there was reason to do so 
         return self.evaluate(expr.right) 
+    
+    def visitWhileStmt(self, stmt):
+        return super().visitWhileStmt(stmt)
