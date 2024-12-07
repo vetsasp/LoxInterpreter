@@ -15,15 +15,15 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         self.environment = Environment()
 
     # LEGACY CODE 
-    # def interpret(self, expr: Expr):
-    #     try: 
-    #         val = self.evaluate(expr)
-    #         print(self.string(val))
-    #     except MyRuntimeError as e:
-    #         self._lox.runtimeError(e)
+    # Needed to pass evaluate cmd test cases
+    def evaluate_LEGACY(self, expr: Expr):
+        try:
+            val = self.evaluate(expr.expression)
+            print(self.string(val))
+        except MyRuntimeError as e:
+            self._lox.runtimeError(e)
 
     def interpret(self, statements: list[Stmt]):
-        # print("Interpreting:", statements[0].expression)
         try:
             for stmt in statements:
                 self.execute(stmt)
@@ -151,7 +151,7 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
     # STATE
     # Methods of the Evaluator class, as it inherits from the Visitor suite 
     def visitExpressionStmt(self, stmt: StmtExpression) -> None:
-        self.evaluate(stmt.expression)
+        res = self.evaluate(stmt.expression)
         return None
 
     def visitPrintStmt(self, stmt: StmtPrint) -> None:

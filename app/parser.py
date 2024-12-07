@@ -50,7 +50,7 @@ class Parser:
         if self.check(t):
             return self.advance()
         
-        if self._lox.ignore_error:
+        if self._lox.ignore_error and t == TokenType.SEMICOLON:
             return
         
         raise self.error(self.peek(), msg)

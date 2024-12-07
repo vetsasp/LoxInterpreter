@@ -13,7 +13,7 @@ class Lox:
         self.hadError = False
         self.hadRuntimeError = False
         self.cmd = ""
-        self.ignore_error = False 
+        self.ignore_error = False
 
     def runPrompt(self):
         inp = ""
@@ -48,27 +48,25 @@ class Lox:
             return
 
         ignore_error_case = {"parse", "evaluate"}
+        # ignore_error_case = {"evaluate"}
         if cmd in ignore_error_case:
             self.ignore_error = True
         
         p = Parser(self, tokens)
         i = Interpreter(self)
 
-        # print("Parsing...") # DEBUG
         statements: list[Stmt] = p.parse()
 
-        # print("Statements:", statements[0].expression)    # DEBUG
-
-        # if cmd == "evaluate":
-
         if cmd == "parse":
-            print(statements)
+            if self.hadError:
+                return
+            for s in statements:
+                print(s.expression)
             return
 
         if cmd == "evaluate":
-            # print("Parse result:", statements[0].expression)    # DEBUG
             try:
-                i.interpret(statements)
+                i.evaluate_LEGACY(statements[0])
             except MyRuntimeError as e:
                 self.report(e.token.line, "", e.msg)
             return
