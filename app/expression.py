@@ -104,6 +104,9 @@ class ExprAssign(Expr):
     def __init__(self, name: Token, val: Expr):
         self.name = name
         self.val = val
+
+    def __str__(self):
+        return f"{self.name.lex} = {self.val}"
         
     def accept(self, visitor):
         return visitor.visitAssignExpr(self)
