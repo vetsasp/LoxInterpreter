@@ -1,4 +1,5 @@
 from app.tokens import Token
+from app.runtime import MyRuntimeError
 
 
 
@@ -18,7 +19,7 @@ class Environment:
         if self.enclosing is not None:
             return self.enclosing.get(name) 
 
-        raise RuntimeError(name, f"Undefined variable '{l}'.")
+        raise MyRuntimeError(name, f"Undefined variable '{l}'.")
     
     def assign(self, name: Token, val):
         if name.lex in self._values:
@@ -29,4 +30,4 @@ class Environment:
             self.enclosing.assign(name, val)
             return 
         
-        raise RuntimeError(name, f"Undefined variable '{name.lex}'.")
+        raise MyRuntimeError(name, f"Undefined variable '{name.lex}'.")
