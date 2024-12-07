@@ -27,6 +27,10 @@ class Stmt(ABC):
 
         '''
         @abstractmethod 
+        def visitIfStmt(self, stmt):
+            pass
+
+        @abstractmethod 
         def visitBlockStmt(self, stmt):
             pass
         
@@ -36,10 +40,6 @@ class Stmt(ABC):
         
         @abstractmethod 
         def visitFunctionStmt(self, stmt):
-            pass
-        
-        @abstractmethod 
-        def visitIfStmt(self, stmt):
             pass
         
         @abstractmethod 
