@@ -199,6 +199,6 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         return self.evaluate(expr.right) 
     
     def visitWhileStmt(self, stmt):
-        while self.isTruthful(self.evaluate(stmt.body)):
+        while self.isTruthful(self.evaluate(stmt.condition)):
             self.execute(stmt.body)
         return None 

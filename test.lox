@@ -1,3 +1,2 @@
-var baz;
-baz = 1;
-print baz;
+var foo = 0;
+while (foo < 3) print foo = foo + 1;
