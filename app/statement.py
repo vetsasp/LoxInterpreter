@@ -31,6 +31,12 @@ class Stmt(ABC):
             pass
 
         @abstractmethod 
+        def visitWhileStmt(self, stmt):
+            pass
+            
+        '''
+        '''
+        @abstractmethod 
         def visitBlockStmt(self, stmt):
             pass
         
@@ -44,10 +50,6 @@ class Stmt(ABC):
         
         @abstractmethod 
         def visitReturnStmt(self, stmt):
-            pass
-        
-        @abstractmethod 
-        def visitWhileStmt(self, stmt):
             pass
         
         '''
@@ -81,15 +83,22 @@ class StmtBlock(Stmt):
 
     def accept(self, visitor):
         return visitor.visitBlockStmt(self)
-    
 
 '''
-    STATUS: 
-        Reached 8.2 in the book
-        - Global Variables
-        Error handling suspended
-        Test cases cannot be past until reimplemented
-        Following book more strictly now. 
+class StmtIf(Stmt):
+    def __init__(self, condition, thenBranch: Stmt, elseBranch: Stmt):
+        self.condition = condition
+        self.thenBranch = thenBranch
+        self.elseBranch = elseBranch
 
-        legacy code will be removed after next successful submit. 
+    def accept(self, visitor):
+        return visitor.visitIfStmt(self)
+
+class StmtWhile(Stmt):
+    def __init__(self, condition, body: Stmt):
+        self.condition = condition
+        self.body = body
+
+    def accept(self, visitor):
+        return visitor.visitWhileStmt(self)
 '''
