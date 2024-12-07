@@ -267,6 +267,35 @@ class Parser:
         else:
             initializer = self.expressionStatement()
 
+        cond = None 
+
+        if not self.check(TokenType.SEMICOLON):
+            cond = self.expression()
+        
+        self.consume(TokenType.SEMICOLON, "Expect ';' after loop condition.")
+
+        inc = None 
+
+        if not self.check(TokenType.RIGHT_PAREN):
+            inc = self.expression()
+        
+        self.consume(TokenType.RIGHT_PAREN, "Expect ')' after for clauses.")
+
+        body: Stmt = self.statement()
+
+        if inc is not None: 
+            body = StmtBlock([body, StmtExpression(inc)])
+        
+        if cond is None:
+            cond = ExprLiteral(True)
+        
+        body = StmtWhile(cond, body) 
+
+        if initializer is not None: 
+            body = StmtBlock([initializer, body])
+
+        return body
+
     def ifStatement(self) -> Stmt:
         self.consume(TokenType.LEFT_PAREN, "Expect '(' after 'if'.")
         cond: Expr = self.expression()
