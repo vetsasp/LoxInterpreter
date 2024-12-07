@@ -25,7 +25,6 @@ class Stmt(ABC):
         def visitVarStmt(self, stmt):
             pass 
 
-        '''
         @abstractmethod 
         def visitIfStmt(self, stmt):
             pass
@@ -33,8 +32,7 @@ class Stmt(ABC):
         @abstractmethod 
         def visitWhileStmt(self, stmt):
             pass
-            
-        '''
+        
         '''
         @abstractmethod 
         def visitBlockStmt(self, stmt):
@@ -84,7 +82,6 @@ class StmtBlock(Stmt):
     def accept(self, visitor):
         return visitor.visitBlockStmt(self)
 
-'''
 class StmtIf(Stmt):
     def __init__(self, condition, thenBranch: Stmt, elseBranch: Stmt):
         self.condition = condition
@@ -101,4 +98,3 @@ class StmtWhile(Stmt):
 
     def accept(self, visitor):
         return visitor.visitWhileStmt(self)
-'''

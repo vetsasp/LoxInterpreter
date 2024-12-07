@@ -31,9 +31,9 @@ class Expr(Stmt, ABC):
         def visitAssignExpr(self, expr):
             pass
 
-        # @abstractmethod
-        # def visitLogicalExpr(self, expr):
-        #     pass
+        @abstractmethod
+        def visitLogicalExpr(self, expr):
+            pass
 
     # @abstractmethod
     def __str__(self): 
@@ -111,11 +111,11 @@ class ExprAssign(Expr):
     def accept(self, visitor):
         return visitor.visitAssignExpr(self)
     
-# class ExprLogical(Expr):
-#     def __init__(self, left: Expr, op: Token, right: Expr):
-#         self.left = left
-#         self.op = op
-#         self.right = right
+class ExprLogical(Expr):
+    def __init__(self, left: Expr, op: Token, right: Expr):
+        self.left = left
+        self.op = op
+        self.right = right
     
-#     def accept(self, visitor):
-#         return visitor.visitLogicalExpr(self)
+    def accept(self, visitor):
+        return visitor.visitLogicalExpr(self)

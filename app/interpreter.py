@@ -176,3 +176,24 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         self.executeBlock(stmt.statements, Environment(self.environment))
         return None
     
+    def visitIfStmt(self, stmt: StmtIf) -> None:
+        if (self.isTruthful(self.evaluate(stmt.condition))):
+            self.execute(stmt.thenBranch)
+        elif stmt.elseBranch is not None:
+            self.execute(stmt.elseBranch)
+        return None
+
+    def visitLogicalExpr(self, expr):
+        left = self.evaluate(expr.left)
+
+        if expr.op.type == TokenType.OR:
+            # if OR and left is truthful
+            if self.isTruthful(left):
+                return left
+        elif not self.isTruthful(left):
+            # if AND and left is NOT truthful
+            return left 
+        
+        # if OR and left was NOT truthful | AND and left was truthful
+        # Only evaluate the right side IF there was reason to do so 
+        return self.evaluate(expr.right) 

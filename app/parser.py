@@ -89,7 +89,7 @@ class Parser:
         # return self.equality()    # LEGACY
 
     def assignment(self):
-        expr: Expr = self.equality()
+        expr: Expr = self.orOp()
 
         if self.match(TokenType.EQUAL):
             equals: Token = self.prev()
@@ -102,6 +102,24 @@ class Parser:
             self.error(equals, "Invalid assignment target.")
             
         return expr 
+    
+    def orOp(self) -> Expr:
+        expr: Expr = self.andOp()
+
+        while self.match(TokenType.OR):
+            op: Token = self.prev()
+            right: Expr = self.andOp()
+            expr = ExprLogical(expr, op, right)
+        return expr 
+    
+    def andOp(self) -> Expr:
+        expr: Expr = self.equality()
+
+        while self.match(TokenType.AND):
+            op: Token = self.prev()
+            right: Expr = self.equality()
+            expr = ExprLogical(expr, op, right)
+        return expr     
 
     def equality(self) -> Expr:
         expr = self.comparison()
@@ -220,6 +238,9 @@ class Parser:
         return StmtVariable(name, init)
     
     def statement(self) -> Stmt:
+        if self.match(TokenType.IF):
+            return self.ifStatement()
+
         if self.match(TokenType.PRINT):
             return self.printStatement()
 
@@ -227,6 +248,19 @@ class Parser:
             return StmtBlock(self.block())
 
         return self.expressionStatement()
+
+    def ifStatement(self) -> Stmt:
+        self.consume(TokenType.LEFT_PAREN, "Expect '(' after 'if'.")
+        cond: Expr = self.expression()
+        self.consume(TokenType.RIGHT_PAREN, "Expect ')' after if condition.")
+
+        thenBranch: Stmt = self.statement()
+        elseBranch: Stmt = None
+        if self.match(TokenType.ELSE):
+            elseBranch = self.statement()
+        
+        return StmtIf(cond, thenBranch, elseBranch)
+        
 
     def printStatement(self) -> Stmt:
         val = self.expression()
