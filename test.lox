@@ -1,2 +1,3 @@
-print 63; 
-print x;
+var baz;
+baz = 1;
+print baz;

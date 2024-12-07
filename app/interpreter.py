@@ -169,7 +169,8 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
     
     def visitAssignExpr(self, expr):
         val = self.evaluate(expr.val)
-        self.environment.assign
+        self.environment.assign(expr.name, val)
+        return val
 
     def visitBlockStmt(self, stmt: StmtBlock) -> None:
         self.executeBlock(stmt.statements, Environment(self.environment))

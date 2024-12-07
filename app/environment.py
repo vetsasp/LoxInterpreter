@@ -12,7 +12,6 @@ class Environment:
         self._values[name] = val 
 
     def get(self, name: Token):
-        print("Getting:", name)
         l = name.lex
         if l in self._values:
             return self._values[l]
