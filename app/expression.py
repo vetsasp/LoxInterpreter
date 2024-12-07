@@ -35,7 +35,7 @@ class Expr(Stmt, ABC):
         # def visitLogicalExpr(self, expr):
         #     pass
 
-    @abstractmethod
+    # @abstractmethod
     def __str__(self): 
         pass 
 
@@ -94,8 +94,8 @@ class ExprVariable(Expr):
     def __init__(self, name: Token):
         self.name = name
 
-    def __str__(self):
-        return f"{self.name.lex}"   # TODO 
+    # def __str__(self):
+    #     return f"{self.name.lex}"   # TODO 
     
     def accept(self, visitor):
         return visitor.visitVariableExpr(self)
@@ -105,8 +105,8 @@ class ExprAssign(Expr):
         self.name = name
         self.val = val
 
-    def __str__(self):
-        return f"{self.name.lex} = {self.val}"
+    # def __str__(self):
+    #     return f"{self.name.lex} = {self.val}"
         
     def accept(self, visitor):
         return visitor.visitAssignExpr(self)
