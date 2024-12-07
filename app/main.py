@@ -20,7 +20,7 @@ def main():
         lox.runPrompt() 
     else:
         cmd = sys.argv[1]
-        validCommands = ["tokenize", "parse", "evaluate"]
+        validCommands = ["tokenize", "parse", "evaluate", "run"]
 
         if cmd not in validCommands:
             print(f"Unknown command: {cmd}", file=sys.stderr)

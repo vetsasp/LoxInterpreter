@@ -2,22 +2,49 @@ from app.tokens import Token
 from app.tokens import TokenType
 
 from app.runtime import MyRuntimeError
-from app.expression import Expr
-# from app.statement import Stmt
+from app.expression import *
+from app.statement import *
+from app.environment import Environment
 
 
 
 # Referred to as Interpreter in the book 
-class Interpreter(Expr.Visitor):#, Stmt.Visitor):
+class Interpreter(Expr.Visitor, Stmt.Visitor):
     def __init__(self, lox):
         self._lox = lox
+        self.environment = Environment()
 
-    def interpret(self, expr: Expr):
-        try: 
-            val = self.evaluate(expr)
-            print(self.string(val))
+    # LEGACY CODE 
+    # def interpret(self, expr: Expr):
+    #     try: 
+    #         val = self.evaluate(expr)
+    #         print(self.string(val))
+    #     except MyRuntimeError as e:
+    #         self._lox.runtimeError(e)
+
+    def interpret(self, statements: list[Stmt]):
+        print("Interpreting:", statements[0].expression)
+        try:
+            for stmt in statements:
+                self.execute(stmt)
         except MyRuntimeError as e:
-            self._lox.runtimeError(e)
+            self._lox.runtimeError(e) 
+
+    def execute(self, stmt: Stmt):
+        # print(f"Executing {stmt}")    # DEBUG
+        stmt.accept(self)
+
+    def executeBlock(self, statements: list[Stmt], env: Environment):
+        prev: Environment = self.environment
+
+        try:
+            self.environment = env 
+
+            for stmt in statements:
+                self.execute(stmt)
+        
+        finally: 
+            self.environment = prev 
 
     @staticmethod
     def string(s) -> str:
@@ -33,10 +60,10 @@ class Interpreter(Expr.Visitor):#, Stmt.Visitor):
     def evaluate(self, expr: Expr): 
         return expr.accept(self)
 
-    def visitLiteralExpr(self, expr): 
+    def visitLiteralExpr(self, expr: ExprLiteral): 
         return expr.val 
 
-    def visitUnaryExpr(self, expr): 
+    def visitUnaryExpr(self, expr: ExprUnary): 
         child = self.evaluate(expr.expr)
 
         if expr.op.type == TokenType.BANG:
@@ -47,10 +74,10 @@ class Interpreter(Expr.Visitor):#, Stmt.Visitor):
         
         print("unary evaluate failed")
 
-    def visitGroupingExpr(self, expr): 
+    def visitGroupingExpr(self, expr: ExprGrouping): 
         return self.evaluate(expr.expr)
 
-    def visitBinaryExpr(self, expr): 
+    def visitBinaryExpr(self, expr: ExprBinary): 
         left = self.evaluate(expr.left)
         right = self.evaluate(expr.right)
 
@@ -87,6 +114,9 @@ class Interpreter(Expr.Visitor):#, Stmt.Visitor):
         
         print("binary evaluate failed")
 
+    # New Expressions 
+    def visitVariableExpr(self, expr: ExprVariable):
+        return self.environment.get(expr.name)
 
     @staticmethod
     def isTruthful(obj) -> bool:
@@ -118,23 +148,30 @@ class Interpreter(Expr.Visitor):#, Stmt.Visitor):
         raise MyRuntimeError(operator, "Operands must be two numbers or two strings.")
 
 
-
     # STATE
     # Methods of the Evaluator class, as it inherits from the Visitor suite 
-    # def visitExpressionStmt(self, stmt: Stmt.Expression):
-    #     evaluate(stmt.expression)
-    #     return None
+    def visitExpressionStmt(self, stmt: StmtExpression) -> None:
+        self.evaluate(stmt.expression)
+        return None
 
-    # def visitPrintStmt(self, stmt: Stmt.Print):
-    #     val = evaluate(stmt.expression)
-    #     print(str(val))
-    #     return None 
+    def visitPrintStmt(self, stmt: StmtPrint) -> None:
+        val = self.evaluate(stmt.expression)
+        print(self.string(val))
+        return None 
     
-    # def interpret(statements: list[Stmt]):
-    #     try {
-    #         for 
-    #     }
+    def visitVarStmt(self, stmt: StmtVariable) -> None:
+        val = None
+        if stmt.initializer != None:
+            val = self.evaluate(stmt.initializer)
 
+        self.environment.define(stmt.name.lex, val)
+        return None 
+    
+    def visitAssignExpr(self, expr):
+        val = self.evaluate(expr.val)
+        self.environment.assign
 
-
-
+    def visitBlockStmt(self, stmt: StmtBlock) -> None:
+        self.executeBlock(stmt.statements, Environment(self.environment))
+        return None
+    

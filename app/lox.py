@@ -5,12 +5,15 @@ from app.tokenize import Tokenizer
 from app.parser import Parser
 from app.runtime import MyRuntimeError
 from app.interpreter import Interpreter
+from app.statement import Stmt
 
 
 class Lox:
     def __init__(self):
         self.hadError = False
         self.hadRuntimeError = False
+        self.cmd = ""
+        self.ignore_error = False 
 
     def runPrompt(self):
         inp = ""
@@ -23,7 +26,7 @@ class Lox:
                 self.run(line)
                 self.hadError = False
 
-    def runFile(self, path: str, cmd: str = None):
+    def runFile(self, path: str, cmd: str = ""):
         with open(path) as file:
             file_contents = file.read()
         self.run(file_contents, cmd)
@@ -33,7 +36,7 @@ class Lox:
         if self.hadRuntimeError:
             exit(70)
 
-    def run(self, line: str, cmd: str = None):
+    def run(self, line: str, cmd: str = ""):
         t = Tokenizer(self, line)
         tokens: list[Token] = t.tokenize()
 
@@ -44,7 +47,42 @@ class Lox:
         if self.hadError:
             return
 
+        ignore_error_case = {"parse", "evaluate"}
+        if cmd in ignore_error_case:
+            self.ignore_error = True
+        
         p = Parser(self, tokens)
+        i = Interpreter(self)
+
+        # print("Parsing...") # DEBUG
+        statements: list[Stmt] = p.parse()
+
+        # print("Statements:", statements[0].expression)    # DEBUG
+
+        # if cmd == "evaluate":
+
+        if cmd == "parse":
+            print(statements)
+            return
+
+        if cmd == "evaluate":
+            # print("Parse result:", statements[0].expression)    # DEBUG
+            try:
+                i.interpret(statements)
+            except MyRuntimeError as e:
+                self.report(e.token.line, "", e.msg)
+            return
+
+        if self.hadError:
+            return
+        
+
+        # print("Interpreting...")    # DEBUG
+        i.interpret(statements)
+
+
+    '''
+    LEGACY CODE
         expression = p.parse()
         
         if self.hadError:
@@ -61,6 +99,8 @@ class Lox:
                 i.interpret(expression)
             except MyRuntimeError as e:
                 self.report(e.token.line, "", e.msg)
+    '''
+    
         
 
 

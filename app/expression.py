@@ -1,9 +1,11 @@
 from abc import ABC, abstractmethod
-# from app.statement import Stmt
+
+from app.tokens import Token
+from app.statement import Stmt
 
 
 
-class Expr(ABC): #Stmt, ABC):
+class Expr(Stmt, ABC):
     class Visitor(ABC):
         @abstractmethod
         def visitLiteralExpr(self, expr): 
@@ -21,6 +23,14 @@ class Expr(ABC): #Stmt, ABC):
         def visitBinaryExpr(self, expr): 
             pass
 
+        @abstractmethod
+        def visitVariableExpr(self, expr):
+            pass 
+
+        @abstractmethod
+        def visitAssignExpr(self, expr):
+            pass
+
     @abstractmethod
     def __str__(self): 
         pass 
@@ -29,7 +39,7 @@ class Expr(ABC): #Stmt, ABC):
     def accept(self, visitor: Visitor):
         pass
 
-class Literal(Expr):
+class ExprLiteral(Expr):
     def __init__(self, val):
         self.val = val
     
@@ -43,7 +53,7 @@ class Literal(Expr):
     def accept(self, visitor):
         return visitor.visitLiteralExpr(self)
     
-class Unary(Expr): 
+class ExprUnary(Expr): 
     def __init__(self, op, expr: Expr):
         self.op = op
         self.expr = expr
@@ -54,7 +64,7 @@ class Unary(Expr):
     def accept(self, visitor):
         return visitor.visitUnaryExpr(self)
 
-class Grouping(Expr): 
+class ExprGrouping(Expr): 
     def __init__(self, expr: Expr):
         self.expr = expr
     
@@ -64,7 +74,7 @@ class Grouping(Expr):
     def accept(self, visitor):
         return visitor.visitGroupingExpr(self)
 
-class Binary(Expr): 
+class ExprBinary(Expr): 
     def __init__(self, op, left = None, right = None):
         self.op = op
         self.left = left
@@ -75,3 +85,21 @@ class Binary(Expr):
     
     def accept(self, visitor):
         return visitor.visitBinaryExpr(self)
+    
+class ExprVariable(Expr):
+    def __init__(self, name: Token):
+        self.name = name
+
+    def __str__(self):
+        return f"{self.name.lex}"   # TODO 
+    
+    def accept(self, visitor):
+        return visitor.visitVariableExpr(self)
+    
+class ExprAssign(Expr):
+    def __init__(self, name: Token, val: Expr):
+        self.name = name
+        self.val = val
+        
+    def accept(self, visitor):
+        return visitor.visitAssignExpr(self)
