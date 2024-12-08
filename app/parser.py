@@ -335,7 +335,6 @@ class Parser:
         
         return StmtIf(cond, thenBranch, elseBranch)
         
-
     def printStatement(self) -> Stmt:
         val = self.expression()
         self.consume(TokenType.SEMICOLON, "Expect ';' after value.")

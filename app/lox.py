@@ -63,6 +63,8 @@ class Lox:
             for s in statements:
                 print(s.expression)
             return
+        
+        print("Parsing error?") # DEBUG
 
         if cmd == "evaluate":
             try:
