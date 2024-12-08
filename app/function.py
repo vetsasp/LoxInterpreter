@@ -20,4 +20,4 @@ class LoxFunction(LoxCallable):
         return len(self.declaration.params)
     
     def __str__(self) -> str: 
-        return f"fn {self.declaration.name.lex}>"
+        return f"<fn {self.declaration.name.lex}>"
