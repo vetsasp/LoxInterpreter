@@ -82,7 +82,7 @@ class StmtBlock(Stmt):
         return visitor.visitBlockStmt(self)
 
 class StmtIf(Stmt):
-    def __init__(self, condition, thenBranch: Stmt, elseBranch: Stmt):
+    def __init__(self, condition, thenBranch: Stmt, elseBranch):
         self.condition = condition
         self.thenBranch = thenBranch
         self.elseBranch = elseBranch

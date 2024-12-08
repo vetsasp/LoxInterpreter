@@ -6,6 +6,7 @@ from app.parser import Parser
 from app.runtime import MyRuntimeError
 from app.interpreter import Interpreter
 from app.statement import Stmt
+from app.resolver import Resolver
 
 
 class Lox:
@@ -74,9 +75,13 @@ class Lox:
 
         if self.hadError:
             return
-        
 
-        # print("Interpreting...")    # DEBUG
+        resolver = Resolver(i)        
+        resolver.resolve(statements) 
+
+        if self.hadError:
+            return
+
         i.interpret(statements)
 
 

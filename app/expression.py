@@ -32,6 +32,10 @@ class Expr(Stmt, ABC):
             pass
 
         @abstractmethod
+        def visitCallExpr(self, expr):
+            pass
+
+        @abstractmethod
         def visitLogicalExpr(self, expr):
             pass
 

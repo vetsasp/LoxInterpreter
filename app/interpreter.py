@@ -14,9 +14,10 @@ from app.ret import ReturnExcept
 # Referred to as Interpreter in the book 
 class Interpreter(Expr.Visitor, Stmt.Visitor):
     def __init__(self, lox):
-        self._lox = lox
+        self.lox = lox
         self.globals = Environment()
         self._environment = self.globals 
+        self.locals: dict[Expr, int] = {}
 
         class Clock(LoxCallable):
             def arity(self) -> int:
@@ -38,17 +39,20 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
             val = self.evaluate(expr.expression)
             print(self.string(val))
         except MyRuntimeError as e:
-            self._lox.runtimeError(e)
+            self.lox.runtimeError(e)
 
     def interpret(self, statements: list[Stmt]):
         try:
             for stmt in statements:
                 self.execute(stmt)
         except MyRuntimeError as e:
-            self._lox.runtimeError(e) 
+            self.lox.runtimeError(e) 
 
     def execute(self, stmt: Stmt):
         stmt.accept(self)
+
+    def resolve(self, expr: Expr, depth: int) -> None:
+        self.locals[expr] = depth 
 
     def executeBlock(self, statements: list[Stmt], env: Environment):
         prev: Environment = self._environment
@@ -132,7 +136,8 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
 
     # New Expressions 
     def visitVariableExpr(self, expr: ExprVariable):
-        return self._environment.get(expr.name)
+        return self.lookupVariable(expr.name, expr)
+        # return self._environment.get(expr.name)   # LEGACY
 
     @staticmethod
     def isTruthful(obj) -> bool:
@@ -163,6 +168,13 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
             return
         raise MyRuntimeError(operator, "Operands must be two numbers or two strings.")
 
+
+    def lookupVariable(self, name: Token, expr: Expr):
+        dist = self.locals.get(expr)
+        if dist is not None:
+            return self._environment.getAt(dist, name.lex)
+        else:
+            return self.globals.get(name)
 
     # STATE
     # Methods of the Evaluator class, as it inherits from the Visitor suite 
@@ -210,7 +222,7 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         return callee.call(self, args) 
     
     def visitExpressionStmt(self, stmt: StmtExpression) -> None:
-        res = self.evaluate(stmt.expression)
+        self.evaluate(stmt.expression)
         return None
 
     def visitPrintStmt(self, stmt: StmtPrint) -> None:
@@ -226,9 +238,20 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         self._environment.define(stmt.name.lex, val)
         return None 
     
+    # def visitAssignExpr(self, expr):
+    #     val = self.evaluate(expr.val)
+    #     self._environment.assign(expr.name, val)
+    #     return val
+
     def visitAssignExpr(self, expr):
         val = self.evaluate(expr.val)
-        self._environment.assign(expr.name, val)
+
+        dist: int = self.locals.get(expr)
+        if dist is not None:
+            self._environment.assignAt(dist, expr.name, val)
+        else:
+            self.globals.assign(expr.name, val)
+
         return val
 
     def visitLogicalExpr(self, expr):

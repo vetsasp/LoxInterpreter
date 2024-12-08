@@ -10,8 +10,6 @@ class LoxFunction(LoxCallable):
         self.closure = closure
 
     def call(self, interpreter, args) -> None:
-        env: Environment = Environment(interpreter.globals)
-
         env: Environment = Environment(self.closure)
 
         for i, v in enumerate(self.declaration.params):

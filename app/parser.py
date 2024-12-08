@@ -340,7 +340,7 @@ class Parser:
         self.consume(TokenType.RIGHT_PAREN, "Expect ')' after if condition.")
 
         thenBranch: Stmt = self.statement()
-        elseBranch: Stmt = None
+        elseBranch = None
         if self.match(TokenType.ELSE):
             elseBranch = self.statement()
         

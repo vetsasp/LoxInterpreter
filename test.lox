@@ -1,5 +1,11 @@
-fun foo() {
-    return 4; 
+fun makeCounter() {
+    var i = 0;
+    fun count() {
+        i = i + 6;
+        print i;
+    }
+    return count;
 }
-
-print foo();
+var counter = makeCounter();
+counter();
+counter();
