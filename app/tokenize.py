@@ -53,7 +53,7 @@ class Tokenizer:
             self.advance()
 
     def isPrev(self, s: TokenType) -> bool:
-        return self._pos > 0 and self._tokens[-1].type == s
+        return len(self._tokens) > 0 and self._tokens[-1].type == s
     
     def parseString(self) -> bool:
         match = re.match(r'"[^"]*"', self._text[self._pos:], re.DOTALL)
