@@ -1,7 +1,7 @@
 from app.callable import LoxCallable
 from app.environment import Environment
 from app.statement import StmtFunction
-from app.return import Return 
+from app.ret import ReturnExcept 
 
 
 class LoxFunction(LoxCallable):
@@ -18,7 +18,7 @@ class LoxFunction(LoxCallable):
 
         try: 
             interpreter.executeBlock(self.declaration.body, env)
-        except Return as ret:
+        except ReturnExcept as ret:
             return ret.val
         
         return None 
