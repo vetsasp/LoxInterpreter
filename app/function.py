@@ -1,6 +1,7 @@
 from app.callable import LoxCallable
 from app.environment import Environment
 from app.statement import StmtFunction
+from app.runtime import Return 
 
 
 class LoxFunction(LoxCallable):
@@ -14,6 +15,12 @@ class LoxFunction(LoxCallable):
             env.define(v.lex, args[i])
 
         interpreter.executeBlock(self.declaration.body, env)
+
+        try: 
+            interpreter.executeBlock(self.declaration.body, env)
+        except Return as ret:
+            return ret.val
+        
         return None 
     
     def arity(self) -> int:

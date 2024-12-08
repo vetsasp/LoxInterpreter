@@ -354,6 +354,14 @@ class Parser:
         self.consume(TokenType.SEMICOLON, "Expect ';' after expression.")
         return StmtExpression(expr)
 
+    def returnStatement(self) -> Stmt:
+        keyword: Token = self.prev()
+        val = None
+        if not self.check(TokenType.SEMICOLON):
+            val = self.expression()
+        self.consume(TokenType.SEMICOLON, "Expect ';' after return value.")
+        return StmtReturn(keyword, val)
+
     def block(self):
         statements: list[Stmt] = []
 

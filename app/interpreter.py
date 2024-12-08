@@ -166,6 +166,44 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
 
     # STATE
     # Methods of the Evaluator class, as it inherits from the Visitor suite 
+
+    def visitReturnStmt(self, stmt: StmtReturn):
+        val = None 
+        if stmt.val != None:
+            val = self.evaluate(stmt.val)
+        
+        raise StmtReturn(val) 
+
+    def visitIfStmt(self, stmt: StmtIf) -> None:
+        if (self.isTruthful(self.evaluate(stmt.condition))):
+            self.execute(stmt.thenBranch)
+        elif stmt.elseBranch is not None:
+            self.execute(stmt.elseBranch)
+        return None
+
+    def visitBlockStmt(self, stmt: StmtBlock) -> None:
+        self.executeBlock(stmt.statements, Environment(self._environment))
+        return None
+    
+    def visitWhileStmt(self, stmt):
+        while self.isTruthful(self.evaluate(stmt.condition)):
+            self.execute(stmt.body)
+        return None 
+    
+    def visitCallExpr(self, expr: ExprCall):
+        callee = self.evaluate(expr.callee)
+        args = [self.evaluate(arg) for arg in expr.args]
+
+        if not isinstance(callee, LoxCallable):
+            raise MyRuntimeError(expr.paren, \
+                "Can only call functions and classes.")
+        
+        if len(args) != callee.arity():
+            raise MyRuntimeError(expr.paren, \
+                f"Expected {callee.arity()} arguments but got {len(args)}.")
+
+        return callee.call(self, args) 
+    
     def visitExpressionStmt(self, stmt: StmtExpression) -> None:
         res = self.evaluate(stmt.expression)
         return None
@@ -188,17 +226,6 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         self._environment.assign(expr.name, val)
         return val
 
-    def visitBlockStmt(self, stmt: StmtBlock) -> None:
-        self.executeBlock(stmt.statements, Environment(self._environment))
-        return None
-    
-    def visitIfStmt(self, stmt: StmtIf) -> None:
-        if (self.isTruthful(self.evaluate(stmt.condition))):
-            self.execute(stmt.thenBranch)
-        elif stmt.elseBranch is not None:
-            self.execute(stmt.elseBranch)
-        return None
-
     def visitLogicalExpr(self, expr):
         left = self.evaluate(expr.left)
 
@@ -213,25 +240,6 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         # if OR and left was NOT truthful | AND and left was truthful
         # Only evaluate the right side IF there was reason to do so 
         return self.evaluate(expr.right) 
-    
-    def visitWhileStmt(self, stmt):
-        while self.isTruthful(self.evaluate(stmt.condition)):
-            self.execute(stmt.body)
-        return None 
-    
-    def visitCallExpr(self, expr: ExprCall):
-        callee = self.evaluate(expr.callee)
-        args = [self.evaluate(arg) for arg in expr.args]
-
-        if not isinstance(callee, LoxCallable):
-            raise MyRuntimeError(expr.paren, \
-                "Can only call functions and classes.")
-        
-        if len(args) != callee.arity():
-            raise MyRuntimeError(expr.paren, \
-                f"Expected {callee.arity()} arguments but got {len(args)}.")
-
-        return callee.call(self, args) 
     
     def visitFunctionStmt(self, stmt) -> None:
         function: LoxFunction = LoxFunction(stmt)
