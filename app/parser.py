@@ -173,7 +173,32 @@ class Parser:
             right: Expr = self.unary()
             return ExprUnary(op, right)
         
-        return self.primary()
+        return self.call()
+    
+    def call(self) -> Expr:
+        expr: Expr = self.primary()
+
+        while True:
+            if self.match(TokenType.LEFT_PAREN):
+                expr = self.finishCall(expr)
+            else:
+                break
+
+        return expr
+    
+    def finishCall(self, callee: Expr) -> Expr:
+        args: list[Expr] = []
+        if not self.check(TokenType.RIGHT_PAREN):
+            args.append(self.expression())
+            while self.match(TokenType.COMMA):
+                if len(args) >= 255:
+                    self.error(self.peek(), \
+                            "Can't have more than 255 arguments.")
+                args.append(self.expression())
+        
+        paren: Token = self.consume(TokenType.RIGHT_PAREN, \
+                                    "Expect ')' after arguments.")
+        return ExprCall(callee, paren, args)
 
     def primary(self) -> Expr:
         if self.match(TokenType.FALSE):
@@ -220,6 +245,8 @@ class Parser:
     
     def declaration(self):
         try:
+            if self.match(TokenType.FUN):
+                return self.function("function")
             if self.match(TokenType.VAR):
                 return self.varDeclaration()
             return self.statement()
@@ -336,3 +363,29 @@ class Parser:
 
         self.consume(TokenType.RIGHT_BRACE, "Expect '}' after block.")
         return statements
+
+    def function(self, kind: str) -> StmtFunction: 
+        name: Token = self.consume(TokenType.IDENTIFIER, \
+                                   f"Expect {kind} name.")
+        
+        self.consume(TokenType.LEFT_PAREN, f"Expect '(' after {kind} name.")
+        params: list[Token] = []
+        if not self.check(TokenType.RIGHT_PAREN):
+            if len(params) >= 255:
+                self.error(self.peek(), \
+                           "Can't have more than 255 parameters.")
+            params.append(
+                self.consume(TokenType.IDENTIFIER, "Expect parameter name.")
+            )
+            while self.match(TokenType.COMMA):
+                if len(params) >= 255:
+                    self.error(self.peek(), \
+                            "Can't have more than 255 parameters.")
+                params.append(
+                    self.consume(TokenType.IDENTIFIER, "Expect parameter name.")
+                )
+        self.consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.")
+
+        self.consume(TokenType.LEFT_BRACE, "Expect '{' before " + {kind} + " body.")
+        body: list[Stmt] = self.block()
+        return StmtFunction(name, params, body) 

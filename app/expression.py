@@ -119,3 +119,12 @@ class ExprLogical(Expr):
     
     def accept(self, visitor):
         return visitor.visitLogicalExpr(self)
+    
+class ExprCall(Expr):
+    def __init__(self, callee: Expr, paren: Token, args: list[Expr]):
+        self.callee = callee
+        self.paren = paren
+        self.args = args 
+
+    def accept(self, visitor):
+        return visitor.visitCallExpr(self)

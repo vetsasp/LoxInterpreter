@@ -5,6 +5,8 @@ from app.runtime import MyRuntimeError
 from app.expression import *
 from app.statement import *
 from app.environment import Environment
+from app.callable import LoxCallable
+from app.function import LoxFunction
 
 
 
@@ -12,11 +14,25 @@ from app.environment import Environment
 class Interpreter(Expr.Visitor, Stmt.Visitor):
     def __init__(self, lox):
         self._lox = lox
-        self.environment = Environment()
+        self.globals = Environment()
+        self._environment = self.globals 
+
+        class Clock(LoxCallable):
+            def arity(self) -> int:
+                return 0
+            
+            def call(self, interpreter, args):
+                import time
+                return time.time()
+            
+            def __str__(self) -> str:
+                return "<native fn>"
+            
+        self.globals.define("clock", Clock())
 
     # LEGACY CODE 
     # Needed to pass evaluate cmd test cases
-    def evaluate_LEGACY(self, expr: Expr):
+    def evaluate_LEGACY(self, expr):
         try:
             val = self.evaluate(expr.expression)
             print(self.string(val))
@@ -35,16 +51,16 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         stmt.accept(self)
 
     def executeBlock(self, statements: list[Stmt], env: Environment):
-        prev: Environment = self.environment
+        prev: Environment = self._environment
 
         try:
-            self.environment = env 
+            self._environment = env 
 
             for stmt in statements:
                 self.execute(stmt)
         
         finally: 
-            self.environment = prev 
+            self._environment = prev 
 
     @staticmethod
     def string(s) -> str:
@@ -116,7 +132,7 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
 
     # New Expressions 
     def visitVariableExpr(self, expr: ExprVariable):
-        return self.environment.get(expr.name)
+        return self._environment.get(expr.name)
 
     @staticmethod
     def isTruthful(obj) -> bool:
@@ -164,16 +180,16 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         if stmt.initializer != None:
             val = self.evaluate(stmt.initializer)
 
-        self.environment.define(stmt.name.lex, val)
+        self._environment.define(stmt.name.lex, val)
         return None 
     
     def visitAssignExpr(self, expr):
         val = self.evaluate(expr.val)
-        self.environment.assign(expr.name, val)
+        self._environment.assign(expr.name, val)
         return val
 
     def visitBlockStmt(self, stmt: StmtBlock) -> None:
-        self.executeBlock(stmt.statements, Environment(self.environment))
+        self.executeBlock(stmt.statements, Environment(self._environment))
         return None
     
     def visitIfStmt(self, stmt: StmtIf) -> None:
@@ -202,3 +218,22 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         while self.isTruthful(self.evaluate(stmt.condition)):
             self.execute(stmt.body)
         return None 
+    
+    def visitCallExpr(self, expr: ExprCall):
+        callee = self.evaluate(expr.callee)
+        args = [self.evaluate(arg) for arg in expr.args]
+
+        if not isinstance(callee, LoxCallable):
+            raise MyRuntimeError(expr.paren, \
+                "Can only call functions and classes.")
+        
+        if len(args) != callee.arity():
+            raise MyRuntimeError(expr.paren, \
+                f"Expected {callee.arity()} arguments but got {len(args)}.")
+
+        return callee.call(self, args) 
+    
+    def visitFunctionStmt(self, stmt) -> None:
+        function: LoxFunction = LoxFunction(stmt)
+        self._environment.define(stmt.name.lex, function)
+        return None

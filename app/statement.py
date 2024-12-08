@@ -33,23 +33,22 @@ class Stmt(ABC):
         def visitWhileStmt(self, stmt):
             pass
         
-        '''
         @abstractmethod 
         def visitBlockStmt(self, stmt):
             pass
         
         @abstractmethod 
-        def visitClassStmt(self, stmt):
-            pass
-        
-        @abstractmethod 
         def visitFunctionStmt(self, stmt):
             pass
-        
+
+        # @abstractmethod 
+        # def visitReturnStmt(self, stmt):
+        #     pass
+
+        '''
         @abstractmethod 
-        def visitReturnStmt(self, stmt):
+        def visitClassStmt(self, stmt):
             pass
-        
         '''
 
 
@@ -98,3 +97,20 @@ class StmtWhile(Stmt):
 
     def accept(self, visitor):
         return visitor.visitWhileStmt(self)
+    
+class StmtFunction(Stmt):
+    def __init__(self, name: Token, params: list[Token], body: list[Stmt]):
+        self.name = name
+        self.params = params
+        self.body = body
+
+    def accept(self, visitor):
+        return visitor.visitFunctionStmt(self)
+
+# class StmtReturn(Stmt):
+#     def __init__(self, keyword: Token, value):
+#         self.keyword = keyword
+#         self.value = value
+
+#     def accept(self, visitor):
+#         return visitor.visitReturnStmt(self)
