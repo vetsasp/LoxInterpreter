@@ -14,13 +14,11 @@ class LoxFunction(LoxCallable):
         for i, v in enumerate(self.declaration.params):
             env.define(v.lex, args[i])
 
-        interpreter.executeBlock(self.declaration.body, env)
-
         try: 
             interpreter.executeBlock(self.declaration.body, env)
         except ReturnExcept as ret:
             return ret.val
-        
+
         return None 
     
     def arity(self) -> int:

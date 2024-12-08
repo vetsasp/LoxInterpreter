@@ -64,14 +64,13 @@ class Lox:
                 print(s.expression)
             return
         
-        print("Parsing error?") # DEBUG
-
         if cmd == "evaluate":
             try:
                 i.evaluate_LEGACY(statements[0])
             except MyRuntimeError as e:
                 self.report(e.token.line, "", e.msg)
             return
+
 
         if self.hadError:
             return

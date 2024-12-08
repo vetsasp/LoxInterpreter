@@ -273,6 +273,9 @@ class Parser:
 
         if self.match(TokenType.PRINT):
             return self.printStatement()
+    
+        if self.match(TokenType.RETURN):
+            return self.returnStatement()
         
         if self.match(TokenType.WHILE):
             return self.whileStatement()
@@ -282,6 +285,14 @@ class Parser:
 
         return self.expressionStatement()
     
+    def returnStatement(self) -> Stmt:
+        keyword: Token = self.prev()
+        val = None
+        if not self.check(TokenType.SEMICOLON):
+            val = self.expression()
+        self.consume(TokenType.SEMICOLON, "Expect ';' after return value.")
+        return StmtReturn(keyword, val)
+
     def forStatement(self) -> Stmt:
         self.consume(TokenType.LEFT_PAREN, "Expect '(' after 'for'.")
 
@@ -352,14 +363,6 @@ class Parser:
         expr = self.expression()
         self.consume(TokenType.SEMICOLON, "Expect ';' after expression.")
         return StmtExpression(expr)
-
-    def returnStatement(self) -> Stmt:
-        keyword: Token = self.prev()
-        val = None
-        if not self.check(TokenType.SEMICOLON):
-            val = self.expression()
-        self.consume(TokenType.SEMICOLON, "Expect ';' after return value.")
-        return StmtReturn(keyword, val)
 
     def block(self):
         statements: list[Stmt] = []

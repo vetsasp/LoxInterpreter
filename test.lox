@@ -1,2 +1,5 @@
-// comment
-// com
+fun foo() {
+    return 4; 
+}
+
+print foo();

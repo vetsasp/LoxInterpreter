@@ -7,6 +7,7 @@ from app.statement import *
 from app.environment import Environment
 from app.callable import LoxCallable
 from app.function import LoxFunction
+from app.ret import ReturnExcept
 
 
 
@@ -47,7 +48,6 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
             self._lox.runtimeError(e) 
 
     def execute(self, stmt: Stmt):
-        # print(f"Executing {stmt}")    # DEBUG
         stmt.accept(self)
 
     def executeBlock(self, statements: list[Stmt], env: Environment):
@@ -169,10 +169,10 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
 
     def visitReturnStmt(self, stmt: StmtReturn):
         val = None 
-        if stmt.val != None:
-            val = self.evaluate(stmt.val)
+        if stmt.value != None:
+            val = self.evaluate(stmt.value)
         
-        raise StmtReturn(val) 
+        raise ReturnExcept(val) 
 
     def visitIfStmt(self, stmt: StmtIf) -> None:
         if (self.isTruthful(self.evaluate(stmt.condition))):
