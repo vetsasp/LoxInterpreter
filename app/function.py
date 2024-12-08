@@ -1,7 +1,7 @@
 from app.callable import LoxCallable
 from app.environment import Environment
 from app.statement import StmtFunction
-from app.runtime import Return 
+from app.return import Return 
 
 
 class LoxFunction(LoxCallable):
