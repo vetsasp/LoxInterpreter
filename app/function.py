@@ -5,11 +5,14 @@ from app.ret import ReturnExcept
 
 
 class LoxFunction(LoxCallable):
-    def __init__(self, declaration): 
+    def __init__(self, declaration, closure: Environment): 
         self.declaration = declaration
+        self.closure = closure
 
     def call(self, interpreter, args) -> None:
         env: Environment = Environment(interpreter.globals)
+
+        env: Environment = Environment(self.closure)
 
         for i, v in enumerate(self.declaration.params):
             env.define(v.lex, args[i])

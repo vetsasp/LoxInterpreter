@@ -174,6 +174,11 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         
         raise ReturnExcept(val) 
 
+    def visitFunctionStmt(self, stmt) -> None:
+        function: LoxFunction = LoxFunction(stmt, self._environment)
+        self._environment.define(stmt.name.lex, function)
+        return None
+    
     def visitIfStmt(self, stmt: StmtIf) -> None:
         if (self.isTruthful(self.evaluate(stmt.condition))):
             self.execute(stmt.thenBranch)
@@ -241,7 +246,3 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         # Only evaluate the right side IF there was reason to do so 
         return self.evaluate(expr.right) 
     
-    def visitFunctionStmt(self, stmt) -> None:
-        function: LoxFunction = LoxFunction(stmt)
-        self._environment.define(stmt.name.lex, function)
-        return None
