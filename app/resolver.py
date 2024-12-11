@@ -214,6 +214,7 @@ class Resolver(Expr.Visitor, Stmt.Visitor):
             if stmt.name.lex == stmt.superclass.name.lex:
                 self.interpreter.lox.parseError(stmt.superclass.name, \
                     "A class can't inherit from itself.")
+                
             self.currentClass = self.currentClass.SUBCLASS
             self.resolve(stmt.superclass)
 
