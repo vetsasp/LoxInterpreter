@@ -39,6 +39,18 @@ class Expr(Stmt, ABC):
         def visitLogicalExpr(self, expr):
             pass
 
+        @abstractmethod
+        def visitGetExpr(self, expr):
+            pass
+
+        @abstractmethod
+        def visitSetExpr(self, expr):
+            pass
+
+        @abstractmethod
+        def visitThisExpr(self, expr):
+            pass
+
     # @abstractmethod
     def __str__(self): 
         pass 
@@ -132,3 +144,30 @@ class ExprCall(Expr):
 
     def accept(self, visitor):
         return visitor.visitCallExpr(self)
+    
+
+# Class Expressions 
+
+class ExprGet(Expr):
+    def __init__(self, obj: Expr, name: Token):
+        self.obj = obj
+        self.name = name
+
+    def accept(self, visitor):
+        return visitor.visitGetExpr(self)
+    
+class ExprSet(Expr):
+    def __init__(self, obj: Expr, name: Token, val: Expr):
+        self.obj = obj
+        self.name = name
+        self.val = val
+
+    def accept(self, visitor):
+        return visitor.visitSetExpr(self)
+
+class ExprThis(Expr):
+    def __init__(self, keyword: Token):
+        self.keyword = keyword
+
+    def accept(self, visitor):
+        return visitor.visitThisExpr(self)

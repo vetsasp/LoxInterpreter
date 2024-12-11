@@ -8,6 +8,8 @@ from app.environment import Environment
 from app.callable import LoxCallable
 from app.function import LoxFunction
 from app.ret import ReturnExcept
+from app.loxclass import LoxClass
+from app.instance import LoxInstance
 
 
 
@@ -16,7 +18,7 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
     def __init__(self, lox):
         self.lox = lox
         self.globals = Environment()
-        self._environment = self.globals 
+        self.environment = self.globals 
         self.locals: dict[Expr, int] = {}
 
         class Clock(LoxCallable):
@@ -55,16 +57,16 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         self.locals[expr] = depth 
 
     def executeBlock(self, statements: list[Stmt], env: Environment):
-        prev: Environment = self._environment
+        prev: Environment = self.environment
 
         try:
-            self._environment = env 
+            self.environment = env 
 
             for stmt in statements:
                 self.execute(stmt)
         
         finally: 
-            self._environment = prev 
+            self.environment = prev 
 
     @staticmethod
     def string(s) -> str:
@@ -172,41 +174,15 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
     def lookupVariable(self, name: Token, expr: Expr):
         dist = self.locals.get(expr)
         if dist is not None:
-            return self._environment.getAt(dist, name.lex)
+            return self.environment.getAt(dist, name.lex)
         else:
             return self.globals.get(name)
 
     # STATE
     # Methods of the Evaluator class, as it inherits from the Visitor suite 
 
-    def visitReturnStmt(self, stmt: StmtReturn):
-        val = None 
-        if stmt.value != None:
-            val = self.evaluate(stmt.value)
-        
-        raise ReturnExcept(val) 
 
-    def visitFunctionStmt(self, stmt) -> None:
-        function: LoxFunction = LoxFunction(stmt, self._environment)
-        self._environment.define(stmt.name.lex, function)
-        return None
-    
-    def visitIfStmt(self, stmt: StmtIf) -> None:
-        if (self.isTruthful(self.evaluate(stmt.condition))):
-            self.execute(stmt.thenBranch)
-        elif stmt.elseBranch is not None:
-            self.execute(stmt.elseBranch)
-        return None
-
-    def visitBlockStmt(self, stmt: StmtBlock) -> None:
-        self.executeBlock(stmt.statements, Environment(self._environment))
-        return None
-    
-    def visitWhileStmt(self, stmt):
-        while self.isTruthful(self.evaluate(stmt.condition)):
-            self.execute(stmt.body)
-        return None 
-    
+    # Exprs 
     def visitCallExpr(self, expr: ExprCall):
         callee = self.evaluate(expr.callee)
         args = [self.evaluate(arg) for arg in expr.args]
@@ -221,23 +197,6 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
 
         return callee.call(self, args) 
     
-    def visitExpressionStmt(self, stmt: StmtExpression) -> None:
-        self.evaluate(stmt.expression)
-        return None
-
-    def visitPrintStmt(self, stmt: StmtPrint) -> None:
-        val = self.evaluate(stmt.expression)
-        print(self.string(val))
-        return None 
-    
-    def visitVarStmt(self, stmt: StmtVariable) -> None:
-        val = None
-        if stmt.initializer != None:
-            val = self.evaluate(stmt.initializer)
-
-        self._environment.define(stmt.name.lex, val)
-        return None 
-    
     # def visitAssignExpr(self, expr):
     #     val = self.evaluate(expr.val)
     #     self._environment.assign(expr.name, val)
@@ -248,7 +207,7 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
 
         dist: int = self.locals.get(expr)
         if dist is not None:
-            self._environment.assignAt(dist, expr.name, val)
+            self.environment.assignAt(dist, expr.name, val)
         else:
             self.globals.assign(expr.name, val)
 
@@ -269,3 +228,81 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         # Only evaluate the right side IF there was reason to do so 
         return self.evaluate(expr.right) 
     
+    def visitGetExpr(self, expr: ExprGet):
+        obj = self.evaluate(expr.obj)
+        if isinstance(obj, LoxInstance):
+            return obj.get(expr.name)
+        
+        raise MyRuntimeError(expr.name, "Only instances have properties.")
+    
+    def visitSetExpr(self, expr: ExprSet):
+        obj = self.evaluate(expr.obj)
+        if not isinstance(obj, LoxInstance):
+            raise MyRuntimeError(expr.name, "Only instances have fields.")
+        
+        val = self.evaluate(expr.val)
+        obj.set(expr.name, val)
+        return val
+    
+    def visitThisExpr(self, expr: ExprThis):
+        return self.lookupVariable(expr.keyword, expr)
+
+    # Stmts
+    def visitReturnStmt(self, stmt: StmtReturn):
+        val = None 
+        if stmt.value != None:
+            val = self.evaluate(stmt.value)
+        
+        raise ReturnExcept(val) 
+
+    def visitFunctionStmt(self, stmt) -> None:
+        function: LoxFunction = LoxFunction(stmt, self.environment, False)
+        self.environment.define(stmt.name.lex, function)
+        return None
+    
+    def visitIfStmt(self, stmt: StmtIf) -> None:
+        if (self.isTruthful(self.evaluate(stmt.condition))):
+            self.execute(stmt.thenBranch)
+        elif stmt.elseBranch is not None:
+            self.execute(stmt.elseBranch)
+        return None
+
+    def visitBlockStmt(self, stmt: StmtBlock) -> None:
+        self.executeBlock(stmt.statements, Environment(self.environment))
+        return None
+    
+    def visitWhileStmt(self, stmt):
+        while self.isTruthful(self.evaluate(stmt.condition)):
+            self.execute(stmt.body)
+        return None 
+    
+    def visitExpressionStmt(self, stmt: StmtExpression) -> None:
+        self.evaluate(stmt.expression)
+        return None
+
+    def visitPrintStmt(self, stmt: StmtPrint) -> None:
+        val = self.evaluate(stmt.expression)
+        print(self.string(val))
+        return None 
+    
+    def visitVarStmt(self, stmt: StmtVariable) -> None:
+        val = None
+        if stmt.initializer != None:
+            val = self.evaluate(stmt.initializer)
+
+        self.environment.define(stmt.name.lex, val)
+        return None 
+    
+    def visitClassStmt(self, stmt: StmtClass) -> None:
+        self.environment.define(stmt.name.lex, None)
+        # clss: LoxClass = LoxClass(stmt.name.lex) # LEGACY 
+
+        methods: dict[str, LoxFunction] = {}
+        for method in stmt.methods:
+            func: LoxFunction = LoxFunction(method, self.environment, \
+                                            method.name.lex == "init")
+            methods[method.name.lex] = func  
+
+        clss: LoxClass = LoxClass(stmt.name.lex, methods) 
+
+        self.environment.assign(stmt.name, clss)

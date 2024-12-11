@@ -6,16 +6,26 @@ from app.expression import *
 from app.interpreter import Interpreter
 
 
-class FunctionType(Enum):
-    NONE = 1, 
-    FUNCTION = 2
-
 
 class Resolver(Expr.Visitor, Stmt.Visitor):
+    
+    class FunctionType(Enum):
+        NONE = 0, 
+        FUNCTION = 1,
+        INITIALIZER = 2,
+        METHOD = 3
+
+    class ClassType(Enum):
+        NONE = 0,
+        CLASS = 1
+
+    currentClass: ClassType = ClassType.NONE
+
     def __init__(self, interpreter):
         self.interpreter: Interpreter = interpreter 
         self.scopes: list[dict[str, bool]] = []
-        self.currentFunction = FunctionType.NONE
+        self.currentFunction = self.FunctionType.NONE
+        self.currentClass: self.ClassType = self.ClassType.NONE
 
     def peek(self) -> dict[str, bool]:
         return self.scopes[-1]
@@ -76,7 +86,7 @@ class Resolver(Expr.Visitor, Stmt.Visitor):
                 return
             
     def resolveFunction(self, function: StmtFunction, t: FunctionType) -> None:
-        enclosingFunction: FunctionType = self.currentFunction
+        enclosingFunction: Resolver.FunctionType = self.currentFunction
         self.currentFunction = t
         self.beginScope()
         for param in function.params:
@@ -85,46 +95,9 @@ class Resolver(Expr.Visitor, Stmt.Visitor):
         self.resolve(function.body)
         self.endScope()
         self.currentFunction = enclosingFunction
-        
-    def visitBlockStmt(self, stmt: StmtBlock) -> None:
-        self.beginScope()
-        self.resolve(stmt.statements)
-        self.endScope()
-    
-    def visitVarStmt(self, stmt: StmtVariable) -> None:
-        self.declare(stmt.name)
-        if stmt.initializer:
-            self.resolve(stmt.initializer)
-        
-        self.define(stmt.name)
-    
-    def visitFunctionStmt(self, stmt: StmtFunction) -> None:
-        self.declare(stmt.name)
-        self.define(stmt.name)
-        self.resolveFunction(stmt, FunctionType.FUNCTION)
-    
-    def visitExpressionStmt(self, stmt: StmtExpression) -> None:
-        self.resolve(stmt.expression)
-    
-    def visitIfStmt(self, stmt: StmtIf) -> None:
-        self.resolve(stmt.condition)
-        self.resolve(stmt.thenBranch)
-        if stmt.elseBranch:
-            self.resolve(stmt.elseBranch)
-    
-    def visitPrintStmt(self, stmt: StmtPrint) -> None:
-        self.resolve(stmt.expression)
-    
-    def visitReturnStmt(self, stmt: StmtReturn) -> None:
-        if self.currentFunction == FunctionType.NONE:
-            self.interpreter.lox.error(stmt.keyword, "Can't return from top-level code.")
-        if stmt.value:
-            self.resolve(stmt.value)
-    
-    def visitWhileStmt(self, stmt: StmtWhile) -> None:
-        self.resolve(stmt.condition)
-        self.resolve(stmt.body)
-    
+
+
+    # Visit Expressions 
     def visitVariableExpr(self, expr: ExprVariable) -> None:
         if self.scopes and self.peek().get(expr.name.lex) == False:
             self.interpreter.lox.error(expr.name, \
@@ -157,3 +130,80 @@ class Resolver(Expr.Visitor, Stmt.Visitor):
 
     def visitUnaryExpr(self, expr: ExprUnary) -> None:
         self.resolve(expr.expr)
+
+    def visitGetExpr(self, expr: ExprGet) -> None:
+        self.resolve(expr.obj)
+
+    def visitSetExpr(self, expr: ExprSet) -> None:
+        self.resolve(expr.val)
+        self.resolve(expr.obj)
+
+    def visitThisExpr(self, expr: ExprThis) -> None:
+        if self.currentClass == self.ClassType.NONE:
+            self.interpreter.lox.error(expr.keyword, \
+                "Can't use 'this' outside of a class.")
+            return 
+        self.resolveLocal(expr, expr.keyword)
+        
+
+    # Visit Statements 
+    def visitBlockStmt(self, stmt: StmtBlock) -> None:
+        self.beginScope()
+        self.resolve(stmt.statements)
+        self.endScope()
+    
+    def visitVarStmt(self, stmt: StmtVariable) -> None:
+        self.declare(stmt.name)
+        if stmt.initializer:
+            self.resolve(stmt.initializer)
+        
+        self.define(stmt.name)
+    
+    def visitFunctionStmt(self, stmt: StmtFunction) -> None:
+        self.declare(stmt.name)
+        self.define(stmt.name)
+        self.resolveFunction(stmt, self.FunctionType.FUNCTION)
+    
+    def visitExpressionStmt(self, stmt: StmtExpression) -> None:
+        self.resolve(stmt.expression)
+    
+    def visitIfStmt(self, stmt: StmtIf) -> None:
+        self.resolve(stmt.condition)
+        self.resolve(stmt.thenBranch)
+        if stmt.elseBranch:
+            self.resolve(stmt.elseBranch)
+    
+    def visitPrintStmt(self, stmt: StmtPrint) -> None:
+        self.resolve(stmt.expression)
+    
+    def visitReturnStmt(self, stmt: StmtReturn) -> None:
+        if self.currentFunction == self.FunctionType.NONE:
+            self.interpreter.lox.error(stmt.keyword, \
+                                       "Can't return from top-level code.")
+        if stmt.value:
+            if self.currentFunction == self.FunctionType.INITIALIZER:
+                self.interpreter.lox.error(stmt.keyword, \
+                    "Can't return a value from an initializer.")
+            self.resolve(stmt.value)
+    
+    def visitWhileStmt(self, stmt: StmtWhile) -> None:
+        self.resolve(stmt.condition)
+        self.resolve(stmt.body)
+    
+    def visitClassStmt(self, stmt: StmtClass) -> None: 
+        enclosingClass: Resolver.ClassType = self.currentClass
+        self.currentClass = self.ClassType.CLASS
+
+        self.declare(stmt.name)
+        self.define(stmt.name)
+
+        self.beginScope()
+        self.peek()["this"] = True 
+
+        for method in stmt.methods:
+            declaration = self.FunctionType.METHOD if \
+                method.name.lex == "init" else self.FunctionType.INITIALIZER
+            self.resolveFunction(method, declaration)
+        
+        self.endScope()
+        self.currentClass = enclosingClass
