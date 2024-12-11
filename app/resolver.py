@@ -144,6 +144,9 @@ class Resolver(Expr.Visitor, Stmt.Visitor):
                 "Can't use 'this' outside of a class.")
             return 
         self.resolveLocal(expr, expr.keyword)
+
+    def visitSuperExpr(self, expr: ExprSuper) -> None:
+        self.resolveLocal(expr, expr.keyword)
         
 
     # Visit Statements 
@@ -197,6 +200,16 @@ class Resolver(Expr.Visitor, Stmt.Visitor):
         self.declare(stmt.name)
         self.define(stmt.name)
 
+        if stmt.superclass:
+            if stmt.name.lex == stmt.superclass.name.lex:
+                self.interpreter.lox.error(stmt.superclass.name, \
+                    "A class can't inherit from itself.")
+            self.resolve(stmt.superclass)
+
+        if stmt.superclass:
+            self.beginScope()
+            self.peek()["super"] = True
+
         self.beginScope()
         self.peek()["this"] = True 
 
@@ -206,4 +219,8 @@ class Resolver(Expr.Visitor, Stmt.Visitor):
             self.resolveFunction(method, declaration)
         
         self.endScope()
+
+        if stmt.superclass:
+            self.endScope()
+
         self.currentClass = enclosingClass

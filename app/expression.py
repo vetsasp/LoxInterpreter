@@ -51,6 +51,10 @@ class Expr(Stmt, ABC):
         def visitThisExpr(self, expr):
             pass
 
+        @abstractmethod
+        def visitSuperExpr(self, expr):
+            pass
+
     # @abstractmethod
     def __str__(self): 
         pass 
@@ -171,3 +175,11 @@ class ExprThis(Expr):
 
     def accept(self, visitor):
         return visitor.visitThisExpr(self)
+    
+class ExprSuper(Expr):
+    def __init__(self, keyword: Token, method: Token):
+        self.keyword = keyword
+        self.method = method
+
+    def accept(self, visitor):
+        return visitor.visitSuperExpr(self)

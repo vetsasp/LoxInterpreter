@@ -246,6 +246,20 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
     
     def visitThisExpr(self, expr: ExprThis):
         return self.lookupVariable(expr.keyword, expr)
+    
+    def visitSuperExpr(self, expr: ExprSuper):
+        dist = self.locals.get(expr)
+        superclass: LoxClass = self.environment.getAt(dist, "super")
+
+        obj: LoxInstance = self.environment.getAt(dist - 1, "this")
+
+        method: LoxFunction = superclass.findMethod(expr.method.lex)
+
+        if method is None:
+            raise MyRuntimeError(expr.method, \
+                "Undefined property '" + expr.method.lex + "'.")
+        
+        return method.bind(obj) 
 
     # Stmts
     def visitReturnStmt(self, stmt: StmtReturn):
@@ -294,8 +308,19 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         return None 
     
     def visitClassStmt(self, stmt: StmtClass) -> None:
+        superclass = None
+        if stmt.superclass:
+            superclass = self.evaluate(stmt.superclass)
+            if not isinstance(superclass, LoxClass):
+                raise MyRuntimeError(stmt.superclass.name, \
+                    "Superclass must be a class.")
+            
         self.environment.define(stmt.name.lex, None)
         # clss: LoxClass = LoxClass(stmt.name.lex) # LEGACY 
+
+        if stmt.superclass:
+            self.environment = Environment(self.environment)
+            self.environment.define("super", superclass)
 
         methods: dict[str, LoxFunction] = {}
         for method in stmt.methods:
@@ -303,6 +328,9 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
                                             method.name.lex == "init")
             methods[method.name.lex] = func  
 
-        clss: LoxClass = LoxClass(stmt.name.lex, methods) 
+        clss: LoxClass = LoxClass(stmt.name.lex, superclass, methods) 
+
+        if superclass:
+            self.environment = self.environment.enclosing
 
         self.environment.assign(stmt.name, clss)

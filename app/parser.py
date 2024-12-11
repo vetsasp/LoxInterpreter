@@ -218,6 +218,13 @@ class Parser:
         if self.match(TokenType.NUMBER, TokenType.STRING):
             return ExprLiteral(self.prev().lit)
         
+        if self.match(TokenType.SUPER):
+            keyword: Token = self.prev()
+            self.consume(TokenType.DOT, "Expect '.' after 'super'.")
+            method: Token = self.consume(TokenType.IDENTIFIER, \
+                                         "Expect superclass method name.")
+            return ExprSuper(keyword, method)
+        
         if self.match(TokenType.THIS):
             return ExprThis(self.prev())
 
@@ -278,6 +285,12 @@ class Parser:
     
     def classDeclaration(self) -> Stmt:
         name: Token = self.consume(TokenType.IDENTIFIER, "Expect class name.")
+        
+        superclass: ExprVariable = None
+        if self.match(TokenType.LESS):
+            self.consume(TokenType.IDENTIFIER, "Expect superclass name.")
+            superclass = ExprVariable(self.prev())
+        
         self.consume(TokenType.LEFT_BRACE, "Expect '{' before class body.")
 
         methods: list[StmtFunction] = []
@@ -286,7 +299,7 @@ class Parser:
         
         self.consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.")
 
-        return StmtClass(name, methods) 
+        return StmtClass(name, superclass, methods) 
 
     def statement(self) -> Stmt:
         if self.match(TokenType.FOR):

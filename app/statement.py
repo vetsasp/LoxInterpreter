@@ -114,10 +114,10 @@ class StmtReturn(Stmt):
         return visitor.visitReturnStmt(self)
     
 class StmtClass(Stmt):
-    # def __init__(self, name: Token, superclass, methods: list[StmtFunction]):
-    def __init__(self, name: Token, methods: list[StmtFunction]):
+    # def __init__(self, name: Token, methods: list[StmtFunction]):
+    def __init__(self, name: Token, superclass, methods: list[StmtFunction]):
         self.name = name
-        # self.superclass = superclass
+        self.superclass = superclass
         self.methods = methods
 
     def accept(self, visitor):

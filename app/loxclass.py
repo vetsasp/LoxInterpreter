@@ -2,10 +2,10 @@ from app.callable import LoxCallable
 from app.instance import LoxInstance
 from app.function import LoxFunction
 
-
 class LoxClass(LoxCallable):
-    def __init__(self, name: str, methods: dict[str, LoxFunction]):
+    def __init__(self, name: str, superclass, methods: dict[str, LoxFunction]):
         self.name = name 
+        self.superclass = superclass
         self.methods = methods 
 
     def __str__(self) -> str:
@@ -29,3 +29,6 @@ class LoxClass(LoxCallable):
     def findMethod(self, name: str):
         if name in self.methods:
             return self.methods[name]
+        
+        if self.superclass:
+            return self.superclass.findMethod(name)
