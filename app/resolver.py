@@ -17,7 +17,8 @@ class Resolver(Expr.Visitor, Stmt.Visitor):
 
     class ClassType(Enum):
         NONE = 0,
-        CLASS = 1
+        CLASS = 1,
+        SUBCLASS = 2
 
     currentClass: ClassType = ClassType.NONE
 
@@ -70,7 +71,7 @@ class Resolver(Expr.Visitor, Stmt.Visitor):
         scope: dict[str, bool] = self.peek()
 
         if name.lex in scope:
-            self.interpreter.lox.error(name, "Already a variable with this name in this scope.")
+            self.interpreter.lox.parseError(name, "Already a variable with this name in this scope.")
 
         scope[name.lex] = False 
     
@@ -100,7 +101,7 @@ class Resolver(Expr.Visitor, Stmt.Visitor):
     # Visit Expressions 
     def visitVariableExpr(self, expr: ExprVariable) -> None:
         if self.scopes and self.peek().get(expr.name.lex) == False:
-            self.interpreter.lox.error(expr.name, \
+            self.interpreter.lox.parseError(expr.name, \
                       "Can't read local variable in its own initializer.")
             
         self.resolveLocal(expr, expr.name)
@@ -140,14 +141,23 @@ class Resolver(Expr.Visitor, Stmt.Visitor):
 
     def visitThisExpr(self, expr: ExprThis) -> None:
         if self.currentClass == self.ClassType.NONE:
-            self.interpreter.lox.error(expr.keyword, \
+            self.interpreter.lox.parseError(expr.keyword, \
                 "Can't use 'this' outside of a class.")
             return 
         self.resolveLocal(expr, expr.keyword)
 
     def visitSuperExpr(self, expr: ExprSuper) -> None:
+        if self.currentClass == self.ClassType.NONE:
+            self.interpreter.lox.parseError(expr.keyword, \
+                "Can't use 'super' outside of a class.")
+        elif self.currentClass != self.ClassType.SUBCLASS:
+            self.interpreter.lox.parseError(expr.keyword, \
+                "Can't use 'super' in a class with no superclass.")
+            
         self.resolveLocal(expr, expr.keyword)
         
+
+
 
     # Visit Statements 
     def visitBlockStmt(self, stmt: StmtBlock) -> None:
@@ -181,11 +191,11 @@ class Resolver(Expr.Visitor, Stmt.Visitor):
     
     def visitReturnStmt(self, stmt: StmtReturn) -> None:
         if self.currentFunction == self.FunctionType.NONE:
-            self.interpreter.lox.error(stmt.keyword, \
+            self.interpreter.lox.parseError(stmt.keyword, \
                                        "Can't return from top-level code.")
         if stmt.value:
             if self.currentFunction == self.FunctionType.INITIALIZER:
-                self.interpreter.lox.error(stmt.keyword, \
+                self.interpreter.lox.parseError(stmt.keyword, \
                     "Can't return a value from an initializer.")
             self.resolve(stmt.value)
     
@@ -202,8 +212,9 @@ class Resolver(Expr.Visitor, Stmt.Visitor):
 
         if stmt.superclass:
             if stmt.name.lex == stmt.superclass.name.lex:
-                self.interpreter.lox.error(stmt.superclass.name, \
+                self.interpreter.lox.parseError(stmt.superclass.name, \
                     "A class can't inherit from itself.")
+            self.currentClass = self.currentClass.SUBCLASS
             self.resolve(stmt.superclass)
 
         if stmt.superclass:
